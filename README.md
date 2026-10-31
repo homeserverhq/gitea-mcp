@@ -2,7 +2,7 @@
 
 This repository contains a Model Context Protocol (MCP) server that acts
 as a secure, multi-tenant proxy between an AI Assistant and the Gitea
-backend API. It exposes **257 MCP tools** covering **22 resource domains**
+backend API. It exposes **317 MCP tools** covering **23 resource domains**
 with full CRUD, search, and repository management.
 
 ## ✨ Features
@@ -13,14 +13,14 @@ with full CRUD, search, and repository management.
 - **👥 Multi-Tenancy** — Uses Python `contextvars` to maintain thread-safe
   user identity isolation, ensuring all AI-driven actions are scoped to
   the authenticated user's permissions.
-- **📊 Full Gitea Coverage** — 257 text-only tools mapped to Gitea API
-  endpoints across 22 resource domains.
+- **📊 Full Gitea Coverage** — 317 text-only tools mapped to Gitea API
+  endpoints across 23 resource domains.
 - **⚡ TOON Optimization** — Bulk list responses are automatically compressed
   using TOON (Token-Optimized Object Notation) to reduce token consumption
   and maximize context window efficiency.
 - **🚀 Efficient Gets** — GET responses return only commonly used fields by
   default. Full objects are available via an `include_all_fields` flag.
-- **🧪 Comprehensive Testing** — 299 automated tests covering all tool
+- **🧪 Comprehensive Testing** — 361 automated tests covering all tool
   domains, run via the test runner pipeline.
 - **🏷️ Tool Annotations** — All tools expose standard MCP ToolAnnotations hints (readOnlyHint, destructiveHint, idempotentHint, openWorldHint). The tags field carries grouping metadata (basic/primary/advanced + gitea).
 
@@ -28,7 +28,7 @@ with full CRUD, search, and repository management.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITEA_BASE_URL` | Yes | Base URL of the Gitea instance (e.g. `http://gitea-app:3000`) |
+| `GITEA_BASE_URL` | Yes | Docker-internal URL of the Gitea API (e.g. `http://gitea-app:3000/api/v1`) |
 | `MCP_SERVER_PORT` | Yes | Port number the MCP server listens on |
 | `ALLOW_ALL_AGGREGATE` | No | When `true`, aggregate listing tools honor the `include_all_fields` parameter. When `false` (default), the parameter is silently forced to `False` for aggregate list operations. |
 | `IS_STATEFUL` | No | When `true`, uses stateful Streamable HTTP with session tracking. When `false` (default), uses stateless mode. |
@@ -42,7 +42,7 @@ with full CRUD, search, and repository management.
     ```
 3. Run the server:
     ```bash
-    export GITEA_BASE_URL=http://gitea-app:3000
+    export GITEA_BASE_URL=http://gitea-app:3000/api/v1
     export MCP_SERVER_PORT=80
     python -m src.main
     ```
@@ -54,7 +54,7 @@ Build and run the server using Docker:
 ```bash
 docker build -t gitea-mcp:latest .
 docker run -d --name gitea-mcp \
-    -e GITEA_BASE_URL="http://gitea-app:3000" \
+    -e GITEA_BASE_URL="http://gitea-app:3000/api/v1" \
     -e MCP_SERVER_PORT=80 \
     gitea-mcp:latest
 ```
@@ -80,7 +80,7 @@ The MCP server serves at `http://gitea-mcp:80/mcp` (Streamable HTTP).
 
 The server implements 257 MCP tools organized into the following categories:
 
-### 🏗️ Repositories (22 tools)
+### 🏗️ Repositories (23 tools)
 
 - `get_version` — Get the Gitea server version
 - `create_current_user_repo` — Create a repository
@@ -104,8 +104,9 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_get_issue_templates` — Get available issue templates for a repository
 - `repo_list_pinned_issues` — List pinned issues
 - `repo_list_pinned_pull_requests` — List pinned pull requests
+- `repo_check_assignee` — Check if a user can be assigned to issues in a repository
 
-### 🌿 Branches & Tags (9 tools)
+### 🌿 Branches & Tags (10 tools)
 
 - `repo_list_branches` — List repository branches
 - `repo_create_branch` — Create a branch
@@ -116,18 +117,19 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_create_tag` — Create a git tag
 - `repo_delete_tag` — Delete a tag by name
 - `repo_get_tag` — Get a repository tag by name
+- `repo_update_branch` — Update a branch reference to a new commit
 
 ### 📄 Contents, Commits & Git (19 tools)
 
 - `repo_get_contents_list` — Get metadata for all entries in the repository root
 - `repo_get_contents` — Get repository file or directory contents
 - `repo_create_file` — Create a file in a repository
-- `repo_update_file` — Update a file in a repository
+- `repo_update_file` — Update a file in a repository if SHA is set, or create the file if SHA is not set
 - `repo_delete_file` — Delete a file in a repository
 - `repo_change_files` — Modify multiple files in a repository
 - `repo_apply_diff_patch` — Apply diff patch to repository
 - `repo_get_all_commits` — Get a list of all commits from a repository
-- `repo_get_single_commit` — Get a single commit from a repository
+- `repo_get_single_commit` — Get a single commit from a repository, it has a GitHub-compatible alias "/repos/{owner}/{repo}/commits/{ref}"
 - `repo_compare_diff` — Get commit comparison information
 - `repo_get_combined_status_by_ref` — Get a commit's combined status, by branch/tag/commit reference
 - `repo_list_statuses_by_ref` — Get a commit's statuses, by branch/tag/commit reference
@@ -139,7 +141,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_list_git_refs` — List git refs matching a reference
 - `get_annotated_tag` — Get an annotated tag object
 
-### 📋 Issues (6 tools)
+### 📋 Issues (9 tools)
 
 - `issue_search_issues` — Search for issues across the repositories that the user has access to
 - `issue_list_issues` — List a repository's issues
@@ -147,6 +149,9 @@ The server implements 257 MCP tools organized into the following categories:
 - `issue_get_issue` — Get an issue
 - `issue_edit_issue` — Edit an issue
 - `issue_delete` — Delete an issue
+- `issue_add_assignees` — Add assignees to an issue
+- `issue_remove_assignees` — Remove assignees from an issue
+- `issue_check_assignee` — Check if a user can be assigned to an issue
 
 ### 💬 Issue Comments & Timeline (9 tools)
 
@@ -243,18 +248,21 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_get_pull_request_files` — Get changed files for a pull request
 - `repo_cancel_scheduled_auto_merge` — Cancel the scheduled auto merge for the given pull request
 
-### 👀 Pull Request Reviews (10 tools)
+### 👀 Pull Request Reviews (13 tools)
 
 - `repo_delete_pull_review_requests` — Cancel review requests for a pull request
 - `repo_create_pull_review_requests` — Create review requests for a pull request
 - `repo_list_pull_reviews` — List all reviews for a pull request
-- `repo_create_pull_review` — Create a review to an pull request
+- `repo_create_pull_review` — Create a review to a pull request
 - `repo_delete_pull_review` — Delete a specific review from a pull request
 - `repo_get_pull_review` — Get a specific review for a pull request
-- `repo_submit_pull_review` — Submit a pending review to an pull request
+- `repo_submit_pull_review` — Submit a pending review to a pull request
 - `repo_get_pull_review_comments` — Get a specific review for a pull request
 - `repo_dismiss_pull_review` — Dismiss a review for a pull request
 - `repo_un_dismiss_pull_review` — Cancel to dismiss a review for a pull request
+- `repo_resolve_pull_review_comment` — Resolve a pull request review comment
+- `repo_unresolve_pull_review_comment` — Unresolve a pull request review comment
+- `repo_create_pull_review_comment_reply` — Reply to a pull request review comment
 
 ### 🚀 Releases (8 tools)
 
@@ -295,7 +303,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_get_tag_protection` — Get a specific tag protection for the repository
 - `repo_edit_tag_protection` — Edit a tag protections for a repository
 
-### 👥 Collaborators, Keys & Repo Teams (13 tools)
+### 👥 Collaborators, Keys & Repo Teams (14 tools)
 
 - `repo_list_collaborators` — List a repository's collaborators
 - `repo_delete_collaborator` — Delete a collaborator from a repository
@@ -306,12 +314,13 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_create_key` — Add a key to a repository
 - `repo_delete_key` — Delete a key from a repository
 - `repo_get_key` — Get a repository deploy key by ID
+- `repo_create_deploy_token` — Add a deploy token to a repository, it authenticates git over HTTPS
 - `repo_list_teams` — List a repository's teams
 - `repo_delete_team` — Delete a team from a repository
 - `repo_check_team` — Check if a team is assigned to a repository
 - `repo_add_team` — Add a team to a repository
 
-### 🏢 Organizations (15 tools)
+### 🏢 Organizations (16 tools)
 
 - `org_get_all` — Get list of organizations
 - `org_create` — Create an organization
@@ -328,6 +337,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `org_publicize_member` — Publicize a user's membership
 - `rename_org` — Rename an organization
 - `org_list_repos` — List an organization's repos
+- `org_delete_repos` — Delete all repositories in an organization
 
 ### 👨‍👩‍👧‍👦 Teams (15 tools)
 
@@ -381,6 +391,58 @@ The server implements 257 MCP tools organized into the following categories:
 - `user_current_put_subscription` — Watch a repo
 - `user_current_delete_subscription` — Unwatch a repo
 
+### 📊 Projects (49 tools)
+
+- `org_list_projects` — List an organization's projects
+- `org_create_project` — Create a project owned by an organization
+- `org_delete_project` — Delete a project
+- `org_get_project` — Get a project
+- `org_edit_project` — Edit a project
+- `org_list_project_columns` — List a project's columns
+- `org_create_project_column` — Create a column in a project
+- `org_move_project_columns` — Reorder a project's columns
+- `org_delete_project_column` — Delete a project column
+- `org_get_project_column` — Get a project column
+- `org_edit_project_column` — Edit a project column
+- `org_set_default_project_column` — Set a project's default column
+- `org_list_project_column_issues` — List the issues in a project column
+- `org_remove_issue_from_project_column` — Remove an issue from a project column
+- `org_add_issue_to_project_column` — Add an issue to a project column
+- `org_move_project_issue` — Move an issue between a project's columns
+- `repo_list_projects` — List a repository's projects
+- `repo_create_project` — Create a project owned by a repository
+- `repo_delete_project` — Delete a project
+- `repo_get_project` — Get a project
+- `repo_edit_project` — Edit a project
+- `repo_list_project_columns` — List a project's columns
+- `repo_create_project_column` — Create a column in a project
+- `repo_move_project_columns` — Reorder a project's columns
+- `repo_delete_project_column` — Delete a project column
+- `repo_get_project_column` — Get a project column
+- `repo_edit_project_column` — Edit a project column
+- `repo_set_default_project_column` — Set a project's default column
+- `repo_list_project_column_issues` — List the issues in a project column
+- `repo_remove_issue_from_project_column` — Remove an issue from a project column
+- `repo_add_issue_to_project_column` — Add an issue to a project column
+- `repo_move_project_issue` — Move an issue between a project's columns
+- `user_current_list_projects` — List your projects
+- `user_current_create_project` — Create a project owned by the authenticated user
+- `user_current_delete_project` — Delete a project
+- `user_current_get_project` — Get a project
+- `user_current_edit_project` — Edit a project
+- `user_current_list_project_columns` — List a project's columns
+- `user_current_create_project_column` — Create a column in a project
+- `user_current_move_project_columns` — Reorder a project's columns
+- `user_current_delete_project_column` — Delete a project column
+- `user_current_get_project_column` — Get a project column
+- `user_current_edit_project_column` — Edit a project column
+- `user_current_set_default_project_column` — Set a project's default column
+- `user_current_list_project_column_issues` — List the issues in a project column
+- `user_current_remove_issue_from_project_column` — Remove an issue from a project column
+- `user_current_add_issue_to_project_column` — Add an issue to a project column
+- `user_current_move_project_issue` — Move an issue between a project's columns
+- `user_list_projects` — List a user's projects
+
 ### 🔔 Notifications (7 tools)
 
 - `notify_get_list` — List notification threads
@@ -391,7 +453,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `notify_get_repo_list` — List notification threads for a repository
 - `notify_read_repo_list` — Mark repository notification threads as read, pinned, or unread
 
-### 📦 Packages (9 tools)
+### 📦 Packages (10 tools)
 
 - `list_packages` — List all packages for an owner
 - `list_package_versions` — List all versions of a package
@@ -399,6 +461,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `link_package` — Link a package to a repository
 - `unlink_package` — Unlink a package from a repository
 - `delete_package` — Delete a package
+- `delete_package_version` — Delete a package version
 - `get_package` — Get a package
 - `list_package_files` — List all files of a package
 - `upload_generic_package` — Upload a text file as a Gitea generic package

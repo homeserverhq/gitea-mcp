@@ -53,12 +53,8 @@ def get_user_token() -> Optional[str]:
 # Pydantic Contract Models
 # =============================================================================
 
-class CreateLabelOption(BaseModel):
-    color: str = Field(..., description='Color.')
-    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
-    exclusive: bool = Field(default=False, description='Exclusive.')
-    is_archived: bool = Field(default=False, description='Is archived.')
-    name: str = Field(..., description='Name.')
+class ExternalWiki(BaseModel):
+    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
 
 class CreateOrgOption(BaseModel):
     description: str = Field(default='', description='The description of the organization.')
@@ -70,15 +66,212 @@ class CreateOrgOption(BaseModel):
     visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public` (default), `limited` or `private`.')
     website: str = Field(default='', description='The website URL of the organization.')
 
+class IssueMeta(BaseModel):
+    index: int = Field(default=0, description='Index.')
+    owner: str = Field(default='', description="owner of the issue's repo.")
+    repo: str = Field(default='', description='Repo.')
+
+class AddCollaboratorOption(BaseModel):
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission level to grant the collaborator.')
+
+class CreateBranchProtectionOption(BaseModel):
+    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
+    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
+    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
+    block_on_codeowner_reviews: bool = Field(default=False, description='Block on codeowner reviews.')
+    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
+    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
+    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
+    branch_name: str = Field(default='', description='Branch name.')
+    bypass_allowlist_teams: Optional[list[str]] = Field(default=None, description='Bypass allowlist teams.')
+    bypass_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Bypass allowlist usernames.')
+    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
+    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
+    enable_bypass_allowlist: bool = Field(default=False, description='Enable bypass allowlist.')
+    enable_force_push: bool = Field(default=False, description='Enable force push.')
+    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
+    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
+    enable_push: bool = Field(default=False, description='Enable push.')
+    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
+    enable_status_check: bool = Field(default=False, description='Enable status check.')
+    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
+    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
+    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
+    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
+    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
+    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
+    priority: int = Field(default=0, description='Priority.')
+    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
+    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
+    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
+    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
+    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
+    required_approvals: int = Field(default=0, description='Required approvals.')
+    rule_name: str = Field(default='', description='Rule name.')
+    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
+    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
+
+class CreateIssueOption(BaseModel):
+    assignee: str = Field(default='', description='deprecated.')
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+    body: str = Field(default='', description='Body.')
+    closed: bool = Field(default=False, description='Closed.')
+    due_date: str = Field(default='', description='Due date.')
+    labels: Optional[list[int]] = Field(default=None, description='list of label ids.')
+    milestone: int = Field(default=0, description='milestone id.')
+    projects: Optional[list[int]] = Field(default=None, description='list of project ids.')
+    ref: str = Field(default='', description='Ref.')
+    title: str = Field(..., description='Title.')
+
+class RenameOrgOption(BaseModel):
+    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
+
+class CreateTagOption(BaseModel):
+    message: str = Field(default='', description='The message to associate with the tag.')
+    tag_name: str = Field(..., description='The name of the tag to create.')
+    target: str = Field(default='', description='The target commit SHA or branch name for the tag.')
+
+class CreateWikiPageOptions(BaseModel):
+    content_base64: str = Field(default='', description='content must be base64 encoded.')
+    message: str = Field(default='', description='optional commit message summarizing the change.')
+    title: str = Field(default='', description='page title. leave empty to keep unchanged.')
+
+class CreatePullRequestOption(BaseModel):
+    allow_maintainer_edit: bool = Field(default=False, description='Whether maintainers can edit the pull request.')
+    assignee: str = Field(default='', description='The primary assignee username.')
+    assignees: Optional[list[str]] = Field(default=None, description='The list of assignee usernames.')
+    base: str = Field(default='', description='The base branch for the pull request.')
+    body: str = Field(default='', description='The description body of the pull request.')
+    due_date: str = Field(default='', description='Due date.')
+    head: str = Field(default='', description="The head branch for the pull request, it could be a branch name on the base repository or a form like `<username>:<branch>` which refers to the user's fork repository's branch.")
+    labels: Optional[list[int]] = Field(default=None, description='The list of label IDs to assign to the pull request.')
+    milestone: int = Field(default=0, description='The milestone ID to assign to the pull request.')
+    reviewers: Optional[list[str]] = Field(default=None, description='The list of reviewer usernames.')
+    team_reviewers: Optional[list[str]] = Field(default=None, description='The list of team reviewer names.')
+    title: str = Field(default='', description='The title of the pull request.')
+
+class InternalTracker(BaseModel):
+    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
+    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
+    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
+
+class EditProjectColumnOption(BaseModel):
+    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
+    sorting: int = Field(default=0, description='Position of the column within the project, between -128 and 127.')
+    title: str = Field(default='', description='Title.')
+
+class CreatePullReviewComment(BaseModel):
+    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
+    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
+    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
+    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
+
+class CreateReleaseOption(BaseModel):
+    body: str = Field(default='', description='The release notes or description.')
+    draft: bool = Field(default=False, description='Whether to create the release as a draft.')
+    name: str = Field(default='', description='The display title of the release.')
+    prerelease: bool = Field(default=False, description='Whether to mark the release as a prerelease.')
+    tag_message: str = Field(default='', description='The message for the git tag.')
+    tag_name: str = Field(..., description='Tag name.')
+    target_commitish: str = Field(default='', description='The target commitish for the release.')
+
+class CreateProjectOption(BaseModel):
+    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
+    description: str = Field(default='', description='Description.')
+    template_type: str = Field(default='', description='Template type: "none", "basic_kanban" or "bug_triage".')
+    title: str = Field(..., description='Title.')
+
+class EditIssueOption(BaseModel):
+    assignee: str = Field(default='', description='deprecated.')
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+    body: str = Field(default='', description='Body.')
+    content_version: int = Field(default=0, description='The current version of the issue content to detect conflicts during editing.')
+    due_date: str = Field(default='', description='Due date.')
+    milestone: int = Field(default=0, description='Milestone.')
+    projects: Optional[list[int]] = Field(default=None, description='list of project ids to set (replaces existing projects).')
+    ref: str = Field(default='', description='Ref.')
+    state: str = Field(default='', description='State.')
+    title: str = Field(default='', description='Title.')
+    unset_due_date: bool = Field(default=False, description='Unset due date.')
+
+class CreateIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body is the comment text content.')
+
+class ChangeFileOperation(BaseModel):
+    content: str = Field(default='', description='Plain-text file content.')
+    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
+    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
+    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
+    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
+
+class CommitDateOptions(BaseModel):
+    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+
+class CreatePullReviewCommentReplyOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
+
+class CreateStatusOption(BaseModel):
+    context: str = Field(default='', description='Context is the unique context identifier for the status.')
+    description: str = Field(default='', description='Description provides a brief description of the status.')
+    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure).')
+    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
+
+class CreateTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
+    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. Defaults to "private".')
+
+class MoveProjectIssueOption(BaseModel):
+    column_id: int = Field(..., description='Target column to move the issue into.')
+    sorting: int = Field(default=0, description='Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first.')
+
+class CreateForkOption(BaseModel):
+    name: str = Field(default='', description='name of the forked repository.')
+    organization: str = Field(default='', description='organization name, if forking into an organization.')
+
+class Identity(BaseModel):
+    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
+    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
+
+class PullReviewRequestOptions(BaseModel):
+    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
+    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
+
+class EditMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides updated details about the milestone.')
+    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the updated state of the milestone.')
+    title: str = Field(default='', description='Title is the updated title of the milestone.')
+
+class ExternalTracker(BaseModel):
+    external_tracker_format: str = Field(default='', description='External issue tracker URL format using {user}, {repo}, and {index} placeholders (e.g. https://tracker.example.com/{repo}/{index}).')
+    external_tracker_regexp_pattern: str = Field(default='', description='Regular expression matching external issue numbers (e.g. \\\\d+).')
+    external_tracker_style: str = Field(default='', description='External issue number format: numeric, alphanumeric, or regexp.')
+    external_tracker_url: str = Field(default='', description='External issue tracker URL (e.g. https://tracker.example.com).')
+
+class UpdateBranchRepoOption(BaseModel):
+    force: bool = Field(default=False, description='Force update even if the change is not a fast-forward.')
+    new_commit_id: str = Field(..., description='New commit SHA (or any ref) the branch should point to.')
+    old_commit_id: str = Field(default='', description='Expected old commit SHA of the branch; if provided it must match the current tip.')
+
 class EditBranchProtectionOption(BaseModel):
     approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
     approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
     block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
+    block_on_codeowner_reviews: bool = Field(default=False, description='Block on codeowner reviews.')
     block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
     block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
     block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
+    bypass_allowlist_teams: Optional[list[str]] = Field(default=None, description='Bypass allowlist teams.')
+    bypass_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Bypass allowlist usernames.')
     dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
     enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
+    enable_bypass_allowlist: bool = Field(default=False, description='Enable bypass allowlist.')
     enable_force_push: bool = Field(default=False, description='Enable force push.')
     enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
     enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
@@ -101,17 +294,6 @@ class EditBranchProtectionOption(BaseModel):
     status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
     unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
 
-class CreatePullReviewComment(BaseModel):
-    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
-    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
-    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
-    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
-
-class IssueMeta(BaseModel):
-    index: int = Field(default=0, description='Index.')
-    owner: str = Field(default='', description="owner of the issue's repo.")
-    repo: str = Field(default='', description='Repo.')
-
 class CreateRepoOption(BaseModel):
     auto_init: bool = Field(default=False, description='Whether the repository should be auto-initialized?.')
     default_branch: str = Field(default='', description='DefaultBranch of the repository (used when initializes and in template).')
@@ -120,36 +302,126 @@ class CreateRepoOption(BaseModel):
     issue_labels: str = Field(default='', description='Label-Set to use.')
     license: str = Field(default='', description='License to use.')
     name: str = Field(..., description='Name of the repository to create.')
-    object_format_name: Optional[Literal['sha1', 'sha256']] = Field(default='sha1', description='ObjectFormatName of the underlying git repository.')
+    object_format_name: Optional[Literal['sha1', 'sha256']] = Field(default='sha1', description='ObjectFormatName of the underlying git repository, empty string for default (sha1).')
     private: bool = Field(default=False, description='Whether the repository is private.')
     readme: str = Field(default='', description='Readme of the repository to create.')
     template: bool = Field(default=False, description='Whether the repository is template.')
     trust_model: Optional[Literal['default', 'collaborator', 'committer', 'collaboratorcommitter']] = Field(default='default', description='TrustModel of the repository.')
 
-class RenameOrgOption(BaseModel):
-    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
-
-class PullReviewRequestOptions(BaseModel):
-    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
-    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
-
-class CreateIssueOption(BaseModel):
-    assignee: str = Field(default='', description='deprecated.')
-    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
-    body: str = Field(default='', description='Body.')
-    closed: bool = Field(default=False, description='Closed.')
-    due_date: str = Field(default='', description='Due date.')
-    labels: Optional[list[int]] = Field(default=None, description='list of label ids.')
-    milestone: int = Field(default=0, description='milestone id.')
-    ref: str = Field(default='', description='Ref.')
-    title: str = Field(..., description='Title.')
-
 class EditDeadlineOption(BaseModel):
     due_date: str = Field(..., description='Due date.')
+
+class CreateBranchRepoOption(BaseModel):
+    new_branch_name: str = Field(..., description='Name of the branch to create.')
+    old_branch_name: str = Field(default='', description='Name of the old branch to create from.')
+    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
+
+class EditIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body is the updated comment text content.')
+
+class LockIssueOption(BaseModel):
+    lock_reason: str = Field(default='', description='Lock reason.')
+
+class CreateDeployKeyTokenOption(BaseModel):
+    read_only: bool = Field(default=False, description='Describe if the token has only read access or read/write.')
+    title: str = Field(..., description='Title of the token to add.')
+
+class CreateLabelOption(BaseModel):
+    color: str = Field(..., description='Color.')
+    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
+    exclusive: bool = Field(default=False, description='Exclusive.')
+    is_archived: bool = Field(default=False, description='Is archived.')
+    name: str = Field(..., description='Name is the display name for the new label.')
+
+class MergeUpstreamRequest(BaseModel):
+    branch: str = Field(default='', description='Branch.')
+    ff_only: bool = Field(default=False, description='Ff only.')
 
 class DismissPullReviewOptions(BaseModel):
     message: str = Field(default='', description='Message.')
     priors: bool = Field(default=False, description='Priors.')
+
+class RenameBranchRepoOption(BaseModel):
+    name: str = Field(..., description='New branch name.')
+
+class CreateTagProtectionOption(BaseModel):
+    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
+    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
+    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
+
+class CreatePullReviewOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
+    comments: Optional[list[CreatePullReviewComment]] = Field(default=None, description='Comments.')
+    commit_id: str = Field(default='', description='Commit id.')
+    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
+
+class ApplyDiffPatchFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='Content.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class EditOrgOption(BaseModel):
+    description: str = Field(default='', description='The description of the organization.')
+    email: str = Field(default='', description='The email address of the organization; use empty string to clear.')
+    full_name: str = Field(default='', description='The full display name of the organization.')
+    location: str = Field(default='', description='The location of the organization.')
+    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
+    website: str = Field(default='', description='The website URL of the organization.')
+
+class CreateProjectColumnOption(BaseModel):
+    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
+    title: str = Field(..., description='Title.')
+
+class RepoTopicOptions(BaseModel):
+    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
+
+class UpdateBranchProtectionPriories(BaseModel):
+    ids: Optional[list[int]] = Field(default=None, description='Ids.')
+
+class CreateMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides details about the milestone.')
+    due_on: str = Field(default='', description='Deadline is the due date for the milestone.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the initial state of the milestone.')
+    title: str = Field(default='', description='Title is the title of the new milestone.')
+
+class EditProjectOption(BaseModel):
+    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
+    description: str = Field(default='', description='Description.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
+    title: str = Field(default='', description='Title.')
+
+class IssueAssigneesOption(BaseModel):
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+
+class DeleteFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    sha: str = Field(..., description='the blob ID (SHA) for the file to delete.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class SubmitPullReviewOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
+    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
+
+class AddTimeOption(BaseModel):
+    created: str = Field(default='', description='Created.')
+    time: int = Field(..., description='time in seconds.')
+    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
+
+class EditReactionOption(BaseModel):
+    content: str = Field(default='', description='The reaction content (e.g., emoji or reaction type).')
 
 class GenerateRepoOption(BaseModel):
     avatar: bool = Field(default=False, description='include avatar of the template repo.')
@@ -165,14 +437,40 @@ class GenerateRepoOption(BaseModel):
     topics: bool = Field(default=False, description='include topics in template repo.')
     webhooks: bool = Field(default=False, description='include webhooks in template repo.')
 
-class AddCollaboratorOption(BaseModel):
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
+class CreateKeyOption(BaseModel):
+    key: str = Field(..., description='An armored SSH key to add.')
+    read_only: bool = Field(default=False, description='Describe if the key has only read access or read/write.')
+    title: str = Field(..., description='Title of the key to add.')
 
-class CreateStatusOption(BaseModel):
-    context: str = Field(default='', description='Context is the unique context identifier for the status.')
-    description: str = Field(default='', description='Description provides a brief description of the status.')
-    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure) pending CommitStatusPending  CommitStatusPending is for when the CommitStatus is Pending success CommitStatusSuccess  CommitStatusSuccess is for when the CommitStatus is Success error CommitStatusError  CommitStatusError is for when the CommitStatus is Error failure CommitStatusFailure  CommitStatusFailure is for when the CommitStatus is Failure warning CommitStatusWarning  CommitStatusWarning is for when the CommitStatus is Warning skipped CommitStatusSkipped  CommitStatusSkipped is for when CommitStatus is Skipped.')
-    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
+class EditLabelOption(BaseModel):
+    color: str = Field(default='', description='Color.')
+    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
+    exclusive: bool = Field(default=False, description='Exclusive.')
+    is_archived: bool = Field(default=False, description='Is archived.')
+    name: str = Field(default='', description='Name is the new display name for the label.')
+
+class IssueLabelsOption(BaseModel):
+    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
+
+class EditReleaseOption(BaseModel):
+    body: str = Field(default='', description='The new release notes or description.')
+    draft: bool = Field(default=False, description='Whether to change the draft status.')
+    name: str = Field(default='', description='The new display title of the release.')
+    prerelease: bool = Field(default=False, description='Whether to change the prerelease status.')
+    tag_name: str = Field(default='', description='The new name of the git tag.')
+    target_commitish: str = Field(default='', description='The new target commitish for the release.')
+
+class EditTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
+    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. When omitted, visibility is left unchanged.')
+
+class MoveProjectColumnsOption(BaseModel):
+    column_ids: list[int] = Field(..., description='Every column ID of the project, in the desired left-to-right order.')
 
 class MigrateRepoOptions(BaseModel):
     auth_password: str = Field(default='', description='Auth password.')
@@ -198,234 +496,10 @@ class MigrateRepoOptions(BaseModel):
     uid: int = Field(default=0, description='deprecated (only for backwards compatibility, use repo_owner instead).')
     wiki: bool = Field(default=False, description='Wiki.')
 
-class CreateTagProtectionOption(BaseModel):
-    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
-    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
-    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
-
-class IssueLabelsOption(BaseModel):
-    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
-
-class CreateBranchProtectionOption(BaseModel):
-    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
-    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
-    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
-    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
-    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
-    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
-    branch_name: str = Field(default='', description='Deprecated: true.')
-    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
-    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
-    enable_force_push: bool = Field(default=False, description='Enable force push.')
-    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
-    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
-    enable_push: bool = Field(default=False, description='Enable push.')
-    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
-    enable_status_check: bool = Field(default=False, description='Enable status check.')
-    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
-    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
-    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
-    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
-    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
-    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
-    priority: int = Field(default=0, description='Priority.')
-    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
-    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
-    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
-    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
-    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
-    required_approvals: int = Field(default=0, description='Required approvals.')
-    rule_name: str = Field(default='', description='Rule name.')
-    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
-    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
-
-class CreateReleaseOption(BaseModel):
-    body: str = Field(default='', description='The release notes or description.')
-    draft: bool = Field(default=False, description='Whether to create the release as a draft.')
-    name: str = Field(default='', description='The display title of the release.')
-    prerelease: bool = Field(default=False, description='Whether to mark the release as a prerelease.')
-    tag_message: str = Field(default='', description='The message for the git tag.')
-    tag_name: str = Field(..., description='Tag name.')
-    target_commitish: str = Field(default='', description='The target commitish for the release.')
-
-class EditTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
-    units: Optional[list[str]] = Field(default=None, description='Units.')
-
-class RenameBranchRepoOption(BaseModel):
-    name: str = Field(..., description='New branch name.')
-
-class CreatePullRequestOption(BaseModel):
-    assignee: str = Field(default='', description='The primary assignee username.')
-    assignees: Optional[list[str]] = Field(default=None, description='The list of assignee usernames.')
-    base: str = Field(default='', description='The base branch for the pull request.')
-    body: str = Field(default='', description='The description body of the pull request.')
-    due_date: str = Field(default='', description='Due date.')
-    head: str = Field(default='', description="The head branch for the pull request, it could be a branch name on the base repository or a form like `<username>:<branch>` which refers to the user's fork repository's branch.")
-    labels: Optional[list[int]] = Field(default=None, description='The list of label IDs to assign to the pull request.')
-    milestone: int = Field(default=0, description='The milestone ID to assign to the pull request.')
-    reviewers: Optional[list[str]] = Field(default=None, description='The list of reviewer usernames.')
-    team_reviewers: Optional[list[str]] = Field(default=None, description='The list of team reviewer names.')
-    title: str = Field(default='', description='The title of the pull request.')
-
-class CommitDateOptions(BaseModel):
-    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-
-class UpdateBranchProtectionPriories(BaseModel):
-    ids: Optional[list[int]] = Field(default=None, description='Ids.')
-
-class CreateBranchRepoOption(BaseModel):
-    new_branch_name: str = Field(..., description='Name of the branch to create.')
-    old_branch_name: str = Field(default='', description='Deprecated: true Name of the old branch to create from.')
-    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
-
-class ExternalTracker(BaseModel):
-    external_tracker_format: str = Field(default='', description='External issue tracker URL format using {user}, {repo}, and {index} placeholders (e.g. https://tracker.example.com/{repo}/{index}).')
-    external_tracker_regexp_pattern: str = Field(default='', description='Regular expression matching external issue numbers (e.g. \\\\d+).')
-    external_tracker_style: str = Field(default='', description='External issue number format: numeric, alphanumeric, or regexp.')
-    external_tracker_url: str = Field(default='', description='External issue tracker URL (e.g. https://tracker.example.com).')
-
-class Identity(BaseModel):
-    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
-    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
-
-class CreateTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
-    units: Optional[list[str]] = Field(default=None, description='Units.')
-
-class EditReactionOption(BaseModel):
-    content: str = Field(default='', description='The reaction content (e.g., emoji or reaction type).')
-
-class EditIssueOption(BaseModel):
-    assignee: str = Field(default='', description='deprecated.')
-    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
-    body: str = Field(default='', description='Body.')
-    due_date: str = Field(default='', description='Due date.')
-    milestone: int = Field(default=0, description='Milestone.')
-    ref: str = Field(default='', description='Ref.')
-    state: str = Field(default='', description='State.')
-    title: str = Field(default='', description='Title.')
-    unset_due_date: bool = Field(default=False, description='Unset due date.')
-
-class LockIssueOption(BaseModel):
-    lock_reason: str = Field(default='', description='Lock reason.')
-
-class EditIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body.')
-
-class ApplyDiffPatchFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='Content.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class CreateMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides details about the milestone.')
-    due_on: str = Field(default='', description='Due on.')
-    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
-    title: str = Field(default='', description='Title is the title of the new milestone.')
-
-class ExternalWiki(BaseModel):
-    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
-
-class CreateFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='content must be base64 encoded.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class MergeUpstreamRequest(BaseModel):
-    branch: str = Field(default='', description='Branch.')
-    ff_only: bool = Field(default=False, description='Ff only.')
-
-class EditReleaseOption(BaseModel):
-    body: str = Field(default='', description='The new release notes or description.')
-    draft: bool = Field(default=False, description='Whether to change the draft status.')
-    name: str = Field(default='', description='The new display title of the release.')
-    prerelease: bool = Field(default=False, description='Whether to change the prerelease status.')
-    tag_name: str = Field(default='', description='The new name of the git tag.')
-    target_commitish: str = Field(default='', description='The new target commitish for the release.')
-
-class ChangeFileOperation(BaseModel):
-    content: str = Field(default='', description='Plain-text file content.')
-    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
-    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
-    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
-    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
-
-class AddTimeOption(BaseModel):
-    created: str = Field(default='', description='Created.')
-    time: int = Field(..., description='time in seconds.')
-    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
-
-class CreateIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body.')
-
-class InternalTracker(BaseModel):
-    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
-    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
-    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
-
 class EditTagProtectionOption(BaseModel):
     name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
     whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
     whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
-
-class CreateTagOption(BaseModel):
-    message: str = Field(default='', description='The message to associate with the tag.')
-    tag_name: str = Field(..., description='Tag name.')
-    target: str = Field(default='', description='The target commit SHA or branch name for the tag.')
-
-class EditOrgOption(BaseModel):
-    description: str = Field(default='', description='The description of the organization.')
-    email: str = Field(default='', description='The email address of the organization.')
-    full_name: str = Field(default='', description='The full display name of the organization.')
-    location: str = Field(default='', description='The location of the organization.')
-    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
-    website: str = Field(default='', description='The website URL of the organization.')
-
-class RepoTopicOptions(BaseModel):
-    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
-
-class EditLabelOption(BaseModel):
-    color: str = Field(default='', description='Color.')
-    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
-    exclusive: bool = Field(default=False, description='Exclusive.')
-    is_archived: bool = Field(default=False, description='Is archived.')
-    name: str = Field(default='', description='Name is the new display name for the label.')
-
-class CreateKeyOption(BaseModel):
-    key: str = Field(..., description='An armored SSH key to add.')
-    read_only: bool = Field(default=False, description='Describe if the key has only read access or read/write.')
-    title: str = Field(..., description='Title of the key to add.')
-
-class EditMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides updated details about the milestone.')
-    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
-    state: str = Field(default='', description='State indicates the updated state of the milestone.')
-    title: str = Field(default='', description='Title is the updated title of the milestone.')
-
-class CreateForkOption(BaseModel):
-    name: str = Field(default='', description='name of the forked repository.')
-    organization: str = Field(default='', description='organization name, if forking into an organization.')
 
 class EditPullRequestOption(BaseModel):
     allow_maintainer_edit: bool = Field(default=False, description='Whether to allow maintainer edits.')
@@ -433,6 +507,7 @@ class EditPullRequestOption(BaseModel):
     assignees: Optional[list[str]] = Field(default=None, description='The new list of assignee usernames.')
     base: str = Field(default='', description='The new base branch for the pull request.')
     body: str = Field(default='', description='The new description body for the pull request.')
+    content_version: int = Field(default=0, description='The current version of the pull request content to detect conflicts during editing.')
     due_date: str = Field(default='', description='Due date.')
     labels: Optional[list[int]] = Field(default=None, description='The new list of label IDs for the pull request.')
     milestone: int = Field(default=0, description='The new milestone ID for the pull request.')
@@ -441,36 +516,42 @@ class EditPullRequestOption(BaseModel):
     unset_due_date: bool = Field(default=False, description='Whether to remove the current deadline.')
 
 class MergePullRequestOption(BaseModel):
-    Do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'] = Field(..., description='Do.')
-    MergeCommitID: str = Field(default='', description='Mergecommitid.')
-    MergeMessageField: str = Field(default='', description='Mergemessagefield.')
-    MergeTitleField: str = Field(default='', description='Mergetitlefield.')
     delete_branch_after_merge: bool = Field(default=False, description='Delete branch after merge.')
+    do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'] = Field(..., description='Do.')
     force_merge: bool = Field(default=False, description='Force merge.')
     head_commit_id: str = Field(default='', description='Head commit id.')
+    merge_commit_id: str = Field(default='', description='Merge commit id.')
+    merge_message_field: str = Field(default='', description='Merge message field.')
+    merge_title_field: str = Field(default='', description='Merge title field.')
     merge_when_checks_succeed: bool = Field(default=False, description='Merge when checks succeed.')
 
-class CreateWikiPageOptions(BaseModel):
-    content_base64: str = Field(default='', description='content must be base64 encoded.')
-    message: str = Field(default='', description='optional commit message summarizing the change.')
-    title: str = Field(default='', description='page title. leave empty to keep unchanged.')
-
-class UpdateFileOptions(BaseModel):
+class ChangeFilesOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class CreateFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
     committer: Optional[Identity] = Field(default=None, description='Committer.')
     content: str = Field(..., description='content must be base64 encoded.')
     dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    sha: str = Field(..., description='the blob ID (SHA) for the file that already exists, it is required for changing existing files.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
 class EditRepoOption(BaseModel):
     allow_fast_forward_only_merge: bool = Field(default=False, description='either `true` to allow fast-forward-only merging pull requests, or `false` to prevent fast-forward-only merging.')
     allow_manual_merge: bool = Field(default=False, description='either `true` to allow mark pr as merged manually, or `false` to prevent it.')
     allow_merge_commits: bool = Field(default=False, description='either `true` to allow merging pull requests with a merge commit, or `false` to prevent merging pull requests with merge commits.')
+    allow_merge_update: bool = Field(default=False, description='either `true` to allow updating pull request branch by merge, or `false` to prevent it.')
     allow_rebase: bool = Field(default=False, description='either `true` to allow rebase-merging pull requests, or `false` to prevent rebase-merging.')
     allow_rebase_explicit: bool = Field(default=False, description='either `true` to allow rebase with explicit merge commits (--no-ff), or `false` to prevent rebase with explicit merge commits.')
     allow_rebase_update: bool = Field(default=False, description='either `true` to allow updating pull request branch by rebase, or `false` to prevent it.')
@@ -481,6 +562,7 @@ class EditRepoOption(BaseModel):
     default_branch: str = Field(default='', description='sets the default branch for this repository.')
     default_delete_branch_after_merge: bool = Field(default=False, description='set to `true` to delete pr branch after merge by default.')
     default_merge_style: str = Field(default='', description='set to a merge style to be used by this repository: "merge", "rebase", "rebase-merge", "squash", or "fast-forward-only".')
+    default_update_style: str = Field(default='', description='set to an update style to be used by this repository: "merge" or "rebase".')
     description: str = Field(default='', description='a short description of the repository.')
     enable_prune: bool = Field(default=False, description='enable prune - remove obsolete remote-tracking references when mirroring.')
     external_tracker: Optional[ExternalTracker] = Field(default=None, description='External tracker.')
@@ -496,41 +578,27 @@ class EditRepoOption(BaseModel):
     ignore_whitespace_conflicts: bool = Field(default=False, description='either `true` to ignore whitespace for conflicts, or `false` to not ignore whitespace.')
     internal_tracker: Optional[InternalTracker] = Field(default=None, description='Internal tracker.')
     mirror_interval: str = Field(default='', description='set to a string like `8h30m0s` to set the mirror interval time.')
+    mirror_password: str = Field(default='', description='authentication password for the remote repository (mirrors).')
+    mirror_token: str = Field(default='', description='authentication token for the remote repository (mirrors).')
+    mirror_username: str = Field(default='', description='authentication username for the remote repository (mirrors).')
     name: str = Field(default='', description='name of the repository.')
     private: bool = Field(default=False, description='either `true` to make the repository private or `false` to make it public. Note: you will get a 422 error if the organization restricts changing repository visibility to organization owners and a non-owner tries to change the value of private.')
     projects_mode: str = Field(default='', description='`repo` to only allow repo-level projects, `owner` to only allow owner projects, `all` to allow both.')
     template: bool = Field(default=False, description='either `true` to make this repository a template or `false` to make it a normal repository.')
     website: str = Field(default='', description='a URL with more information about the repository.')
 
-class DeleteFileOptions(BaseModel):
+class UpdateFileOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
     committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='content must be base64 encoded.')
     dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    sha: str = Field(..., description='the blob ID (SHA) for the file that already exists, it is required for changing existing files.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    sha: str = Field(default='', description='the blob ID (SHA) for the file that already exists to update, or leave it empty to create a new file.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class ChangeFilesOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class CreatePullReviewOptions(BaseModel):
-    body: str = Field(default='', description='Body.')
-    comments: Optional[list[CreatePullReviewComment]] = Field(default=None, description='Comments.')
-    commit_id: str = Field(default='', description='Commit id.')
-    event: str = Field(default=None, description='Event.')
-
-class SubmitPullReviewOptions(BaseModel):
-    body: str = Field(default='', description='Body.')
-    event: str = Field(default=None, description='Event.')
 
 
 # =============================================================================
@@ -1017,6 +1085,387 @@ async def org_is_member(org: str, username: str, sudo: str = "", ctx: Context = 
     return data
 
 @mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_list_projects(org: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List an organization's projects.
+
+    Args:
+        org: Organization name (e.g. acme).
+        state: State filter. Options: open, closed, or all.
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    if state is not None and state != "": args['state'] = state
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_list_projects', get_user_token(), **args)
+    return {'projects': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Create Project", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_create_project(org: str, description: str, title: str, card_type: str = '', template_type: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a project owned by an organization.
+
+    Args:
+        org: Organization name (e.g. acme).
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        template_type: Template type: "none", "basic_kanban" or "bug_triage".
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    if card_type != "": args['card_type'] = card_type
+    args['description'] = description
+    if template_type != "": args['template_type'] = template_type
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_create_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def org_delete_project(org: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_delete_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_get_project(org: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_get_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_edit_project(org: str, id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        state: State filter. Options: open, closed, or all.
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    if card_type != "": args['card_type'] = card_type
+    if description != "": args['description'] = description
+    if state is not None and state != 'open': args['state'] = state
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_edit_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_list_project_columns(org: str, id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List a project's columns.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_list_project_columns', get_user_token(), **args)
+    return {'project_columns': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_create_project_column(org: str, id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a column in a project.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    if color != "": args['color'] = color
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_create_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_move_project_columns(org: str, id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Reorder a project's columns.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_ids: Every column ID of the project, in the desired left-to-right order (e.g. ["value"]).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_ids'] = column_ids
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_move_project_columns', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def org_delete_project_column(org: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_delete_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_get_project_column(org: str, id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_get_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_edit_project_column(org: str, id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        sorting: Position of the column within the project, between -128 and 127 (e.g. 1).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    if color != "": args['color'] = color
+    if sorting != 0: args['sorting'] = sorting
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_edit_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_set_default_project_column(org: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Set a project's default column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_set_default_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def org_list_project_column_issues(org: str, id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List the issues in a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_list_project_column_issues', get_user_token(), **args)
+    return {'issues': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def org_remove_issue_from_project_column(org: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Remove an issue from a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_remove_issue_from_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_add_issue_to_project_column(org: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Add an issue to a project column.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_add_issue_to_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def org_move_project_issue(org: str, id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Move an issue between a project's columns.
+
+    Args:
+        org: Organization name (e.g. acme).
+        id: Resource ID (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        column_id: Target column to move the issue into (e.g. 1).
+        sorting: Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    args['id'] = id
+    args['issue_id'] = issue_id
+    args['column_id'] = column_id
+    if sorting != 0: args['sorting'] = sorting
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_move_project_issue', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Public Members", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_public_members(org: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -1115,6 +1564,23 @@ async def rename_org(org: str, new_name: str, sudo: str = "", ctx: Context = Non
     return data
 
 @mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Delete Repos", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def org_delete_repos(org: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete all repositories in an organization.
+
+    Args:
+        org: Organization name (e.g. acme).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['org'] = org
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('org_delete_repos', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_repos(org: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -1204,7 +1670,7 @@ async def org_list_teams(org: str, page: int = 1, limit: int = 50, include_all_f
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Create Team", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def org_create_team(org: str, description: str, name: str, permission: Literal['read', 'write', 'admin'], can_create_org_repo: bool = False, includes_all_repositories: bool = False, units: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def org_create_team(org: str, description: str, name: str, permission: Literal['read', 'write', 'admin'], can_create_org_repo: bool = False, includes_all_repositories: bool = False, units: list[str] | None = None, visibility: Literal['public', 'limited', 'private'] = 'public', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Create a team.
 
     Args:
@@ -1215,6 +1681,7 @@ async def org_create_team(org: str, description: str, name: str, permission: Lit
         name: Resource name (e.g. my-resource).
         permission: Permission level. Options: read, write, or admin.
         units: Repository units granted to the team. Options: repo.code, repo.issues, repo.ext_issues, repo.pulls, repo.releases, repo.wiki, repo.ext_wiki, repo.projects, repo.packages, or repo.actions.
+        visibility: Organization visibility. Options: public, limited, or private.
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -1226,6 +1693,7 @@ async def org_create_team(org: str, description: str, name: str, permission: Lit
     args['name'] = name
     args['permission'] = permission
     if units is not None: args['units'] = units
+    if visibility is not None and visibility != 'public': args['visibility'] = visibility
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('org_create_team', get_user_token(), **args)
@@ -1262,14 +1730,14 @@ async def team_search(org: str, q: str = "", include_desc: bool = False, page: i
 @mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="List Packages", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def list_packages(owner: str, page: int = 1, limit: int = 50, type: Literal['alpine', 'cargo', 'chef', 'composer', 'conan', 'conda', 'container', 'cran', 'debian', 'generic', 'go', 'helm', 'maven', 'npm', 'nuget', 'pub', 'pypi', 'rpm', 'rubygems', 'swift', 'vagrant'] = 'alpine', q: str = "", include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def list_packages(owner: str, page: int = 1, limit: int = 50, type: Literal['alpine', 'cargo', 'chef', 'composer', 'conan', 'conda', 'container', 'cran', 'debian', 'generic', 'go', 'helm', 'maven', 'npm', 'nuget', 'pub', 'pypi', 'rpm', 'rubygems', 'swift', 'terraform', 'vagrant'] = 'alpine', q: str = "", include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Gets all packages of an owner.
 
     Args:
         owner: Repository owner username (e.g. solo).
         page: Page number (1-based) (Default: 1).
         limit: Page size (1-50) (Default: 50).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         q: Search query.
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
@@ -1286,6 +1754,27 @@ async def list_packages(owner: str, page: int = 1, limit: int = 50, type: Litera
     return {'packages': json_to_toon(data)}
 
 @mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Delete Package", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def delete_package(owner: str, type: str, name: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a package.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
+        name: Resource name (e.g. my-resource).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['type'] = type
+    args['name'] = name
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('delete_package', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="List Package Versions", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def list_package_versions(owner: str, type: str, name: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -1293,7 +1782,7 @@ async def list_package_versions(owner: str, type: str, name: str, page: int = 1,
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         page: Page number (1-based) (Default: 1).
         limit: Page size (1-50) (Default: 50).
@@ -1319,7 +1808,7 @@ async def get_latest_package_version(owner: str, type: str, name: str, include_a
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
@@ -1342,7 +1831,7 @@ async def link_package(owner: str, type: str, name: str, repo_name: str, sudo: s
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         repo_name: Repository name.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
@@ -1365,7 +1854,7 @@ async def unlink_package(owner: str, type: str, name: str, sudo: str = "", ctx: 
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -1379,14 +1868,14 @@ async def unlink_package(owner: str, type: str, name: str, sudo: str = "", ctx: 
     return data
 
 @mcp.tool(
-    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Delete Package", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Delete Package Version", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
-async def delete_package(owner: str, type: str, name: str, version: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a package.
+async def delete_package_version(owner: str, type: str, name: str, version: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a package version.
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: issues or pulls.
         name: Resource name (e.g. my-resource).
         version: Package version.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
@@ -1397,7 +1886,7 @@ async def delete_package(owner: str, type: str, name: str, version: str, sudo: s
     args['name'] = name
     args['version'] = version
     if sudo: args["sudo"] = sudo
-    data = await get_client().call('delete_package', get_user_token(), **args)
+    data = await get_client().call('delete_package_version', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
 
@@ -1409,7 +1898,7 @@ async def get_package(owner: str, type: str, name: str, version: str, include_al
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         version: Package version.
         include_all_fields: Default False (common fields only). Set True for all fields.
@@ -1434,7 +1923,7 @@ async def list_package_files(owner: str, type: str, name: str, version: str, inc
 
     Args:
         owner: Repository owner username (e.g. solo).
-        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, or vagrant.
+        type: Resource type. Options: alpine, cargo, chef, composer, conan, conda, container, cran, debian, generic, go, helm, maven, npm, nuget, pub, pypi, rpm, rubygems, swift, terraform, or vagrant.
         name: Resource name (e.g. my-resource).
         version: Package version.
         include_all_fields: Default False (common fields only). Set True for all fields.
@@ -1453,7 +1942,7 @@ async def list_package_files(owner: str, type: str, name: str, version: str, inc
 @mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Issue Search Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', labels: list[str] | None = None, milestones: list[str] | None = None, q: str = "", priority_repo_id: int = 0, type: Literal['issues', 'pulls'] = 'issues', since: str = "", before: str = "", assigned: bool = False, created: bool = False, mentioned: bool = False, review_requested: bool = False, reviewed: bool = False, owner: str = "", team: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', labels: list[str] | None = None, milestones: list[str] | None = None, q: str = "", type: Literal['issues', 'pulls'] = 'issues', since: str = "", before: str = "", assigned: bool = False, created: bool = False, mentioned: bool = False, review_requested: bool = False, reviewed: bool = False, owner: str = "", created_by: str = "", team: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Search for issues across the repositories that the user has access to.
 
     Args:
@@ -1461,7 +1950,6 @@ async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', 
         labels: Label names to filter by (e.g. ["bug", "ui"]).
         milestones: Milestone names or IDs to filter by (e.g. ["v1.0"]).
         q: Search query.
-        priority_repo_id: Repository ID to prioritize in the results (e.g. 1).
         type: Issue type: issues or pulls.
         since: ISO 8601 format (2026-06-22T15:00:00-04:00).
         before: ISO 8601 format (2026-06-22T15:00:00-04:00).
@@ -1471,6 +1959,7 @@ async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', 
         review_requested: Filter pull requests where the authenticated user's review was requested. true or false.
         reviewed: Filter pull requests reviewed by the authenticated user. true or false.
         owner: Repository owner username (e.g. solo).
+        created_by: Only show items which were created by the given user.
         team: Team name (e.g. developers).
         page: Page number (1-based) (Default: 1).
         limit: Page size (1-50) (Default: 50).
@@ -1482,7 +1971,6 @@ async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', 
     if labels is not None and labels != "": args['labels'] = labels
     if milestones is not None and milestones != "": args['milestones'] = milestones
     if q is not None and q != "": args['q'] = q
-    if priority_repo_id is not None and priority_repo_id != "": args['priority_repo_id'] = priority_repo_id
     if type is not None and type != "": args['type'] = type
     if since is not None and since != "": args['since'] = since
     if before is not None and before != "": args['before'] = before
@@ -1492,6 +1980,7 @@ async def issue_search_issues(state: Literal['open', 'closed', 'all'] = 'open', 
     if review_requested is not None and review_requested != "": args['review_requested'] = review_requested
     if reviewed is not None and reviewed != "": args['reviewed'] = reviewed
     if owner is not None and owner != "": args['owner'] = owner
+    if created_by is not None and created_by != "": args['created_by'] = created_by
     if team is not None and team != "": args['team'] = team
     if page is not None and page != "": args['page'] = page
     if limit is not None and limit != "": args['limit'] = limit
@@ -1654,7 +2143,7 @@ async def repo_get(owner: str, repo: str, include_all_fields: bool = False, sudo
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Edit", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool = False, allow_manual_merge: bool = False, allow_merge_commits: bool = False, allow_rebase: bool = False, allow_rebase_explicit: bool = False, allow_rebase_update: bool = False, allow_squash_merge: bool = False, archived: bool = False, autodetect_manual_merge: bool = False, default_allow_maintainer_edit: bool = False, default_branch: str = '', default_delete_branch_after_merge: bool = False, default_merge_style: str = '', description: str = '', enable_prune: bool = False, external_tracker: ExternalTracker = None, external_wiki: ExternalWiki = None, has_actions: bool = False, has_code: bool = False, has_issues: bool = False, has_packages: bool = False, has_projects: bool = False, has_pull_requests: bool = False, has_releases: bool = False, has_wiki: bool = False, ignore_whitespace_conflicts: bool = False, internal_tracker: InternalTracker = None, mirror_interval: str = '', name: str = '', private: bool = False, projects_mode: str = '', template: bool = False, website: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool = False, allow_manual_merge: bool = False, allow_merge_commits: bool = False, allow_merge_update: bool = False, allow_rebase: bool = False, allow_rebase_explicit: bool = False, allow_rebase_update: bool = False, allow_squash_merge: bool = False, archived: bool = False, autodetect_manual_merge: bool = False, default_allow_maintainer_edit: bool = False, default_branch: str = '', default_delete_branch_after_merge: bool = False, default_merge_style: str = '', default_update_style: str = '', description: str = '', enable_prune: bool = False, external_tracker: ExternalTracker = None, external_wiki: ExternalWiki = None, has_actions: bool = False, has_code: bool = False, has_issues: bool = False, has_packages: bool = False, has_projects: bool = False, has_pull_requests: bool = False, has_releases: bool = False, has_wiki: bool = False, ignore_whitespace_conflicts: bool = False, internal_tracker: InternalTracker = None, mirror_interval: str = '', mirror_password: str = '', mirror_token: str = '', mirror_username: str = '', name: str = '', private: bool = False, projects_mode: str = '', template: bool = False, website: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Edit a repository's properties.
 
     Args:
@@ -1663,6 +2152,7 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
         allow_fast_forward_only_merge: either `true` to allow fast-forward-only merging pull requests, or `false` to prevent fast-forward-only merging. true or false.
         allow_manual_merge: either `true` to allow mark pr as merged manually, or `false` to prevent it. true or false.
         allow_merge_commits: either `true` to allow merging pull requests with a merge commit, or `false` to prevent merging pull requests with merge commits. true or false.
+        allow_merge_update: either `true` to allow updating pull request branch by merge, or `false` to prevent it. true or false.
         allow_rebase: either `true` to allow rebase-merging pull requests, or `false` to prevent rebase-merging. true or false.
         allow_rebase_explicit: either `true` to allow rebase with explicit merge commits (--no-ff), or `false` to prevent rebase with explicit merge commits. true or false.
         allow_rebase_update: either `true` to allow updating pull request branch by rebase, or `false` to prevent it. true or false.
@@ -1673,6 +2163,7 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
         default_branch: Default branch name (e.g. main).
         default_delete_branch_after_merge: set to `true` to delete pr branch after merge by default. true or false.
         default_merge_style: set to a merge style to be used by this repository: "merge", "rebase", "rebase-merge", "squash", or "fast-forward-only".
+        default_update_style: set to an update style to be used by this repository: "merge" or "rebase".
         description: Description text (e.g. Short description).
         enable_prune: enable prune - remove obsolete remote-tracking references when mirroring. true or false.
         external_tracker: External tracker.
@@ -1688,6 +2179,9 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
         ignore_whitespace_conflicts: either `true` to ignore whitespace for conflicts, or `false` to not ignore whitespace. true or false.
         internal_tracker: Internal tracker.
         mirror_interval: Mirror sync interval (e.g. 10m).
+        mirror_password: authentication password for the remote repository (mirrors).
+        mirror_token: authentication token for the remote repository (mirrors).
+        mirror_username: authentication username for the remote repository (mirrors).
         name: Resource name (e.g. my-resource).
         private: Whether the repository is private: true or false.
         projects_mode: `repo` to only allow repo-level projects, `owner` to only allow owner projects, `all` to allow both.
@@ -1702,6 +2196,7 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
     if allow_fast_forward_only_merge: args['allow_fast_forward_only_merge'] = allow_fast_forward_only_merge
     if allow_manual_merge: args['allow_manual_merge'] = allow_manual_merge
     if allow_merge_commits: args['allow_merge_commits'] = allow_merge_commits
+    if allow_merge_update: args['allow_merge_update'] = allow_merge_update
     if allow_rebase: args['allow_rebase'] = allow_rebase
     if allow_rebase_explicit: args['allow_rebase_explicit'] = allow_rebase_explicit
     if allow_rebase_update: args['allow_rebase_update'] = allow_rebase_update
@@ -1712,6 +2207,7 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
     if default_branch != "": args['default_branch'] = default_branch
     if default_delete_branch_after_merge: args['default_delete_branch_after_merge'] = default_delete_branch_after_merge
     if default_merge_style != "": args['default_merge_style'] = default_merge_style
+    if default_update_style != "": args['default_update_style'] = default_update_style
     if description != "": args['description'] = description
     if enable_prune: args['enable_prune'] = enable_prune
     if external_tracker is not None: args['external_tracker'] = external_tracker
@@ -1727,6 +2223,9 @@ async def repo_edit(owner: str, repo: str, allow_fast_forward_only_merge: bool =
     if ignore_whitespace_conflicts: args['ignore_whitespace_conflicts'] = ignore_whitespace_conflicts
     if internal_tracker is not None: args['internal_tracker'] = internal_tracker
     if mirror_interval != "": args['mirror_interval'] = mirror_interval
+    if mirror_password != "": args['mirror_password'] = mirror_password
+    if mirror_token != "": args['mirror_token'] = mirror_token
+    if mirror_username != "": args['mirror_username'] = mirror_username
     if name != "": args['name'] = name
     if private: args['private'] = private
     if projects_mode != "": args['projects_mode'] = projects_mode
@@ -1785,6 +2284,27 @@ async def repo_get_assignees(owner: str, repo: str, include_all_fields: bool = F
     return {'repositories': json_to_toon(data)}
 
 @mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Check Assignee", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_check_assignee(owner: str, repo: str, assignee: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Check if a user can be assigned to issues in a repository.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        assignee: Assignee username (e.g. amanda).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['assignee'] = assignee
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_check_assignee', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Branch Protection", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_branch_protection(owner: str, repo: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -1807,7 +2327,7 @@ async def repo_list_branch_protection(owner: str, repo: str, include_all_fields:
 @mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Create Branch Protection", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_create_branch_protection(owner: str, repo: str, branch_name: str, approvals_whitelist_teams: list[str] | None = None, approvals_whitelist_usernames: list[str] | None = None, block_admin_merge_override: bool = False, block_on_official_review_requests: bool = False, block_on_outdated_branch: bool = False, block_on_rejected_reviews: bool = False, dismiss_stale_approvals: bool = False, enable_approvals_whitelist: bool = False, enable_force_push: bool = False, enable_force_push_allowlist: bool = False, enable_merge_whitelist: bool = False, enable_push: bool = False, enable_push_whitelist: bool = False, enable_status_check: bool = False, force_push_allowlist_deploy_keys: bool = False, force_push_allowlist_teams: list[str] | None = None, force_push_allowlist_usernames: list[str] | None = None, ignore_stale_approvals: bool = False, merge_whitelist_teams: list[str] | None = None, merge_whitelist_usernames: list[str] | None = None, priority: int = 0, protected_file_patterns: list[str] | None = None, push_whitelist_deploy_keys: bool = False, push_whitelist_teams: list[str] | None = None, push_whitelist_usernames: list[str] | None = None, require_signed_commits: bool = False, required_approvals: int = 0, rule_name: str = '', status_check_contexts: list[str] | None = None, unprotected_file_patterns: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_create_branch_protection(owner: str, repo: str, branch_name: str, approvals_whitelist_teams: list[str] | None = None, approvals_whitelist_usernames: list[str] | None = None, block_admin_merge_override: bool = False, block_on_codeowner_reviews: bool = False, block_on_official_review_requests: bool = False, block_on_outdated_branch: bool = False, block_on_rejected_reviews: bool = False, bypass_allowlist_teams: list[str] | None = None, bypass_allowlist_usernames: list[str] | None = None, dismiss_stale_approvals: bool = False, enable_approvals_whitelist: bool = False, enable_bypass_allowlist: bool = False, enable_force_push: bool = False, enable_force_push_allowlist: bool = False, enable_merge_whitelist: bool = False, enable_push: bool = False, enable_push_whitelist: bool = False, enable_status_check: bool = False, force_push_allowlist_deploy_keys: bool = False, force_push_allowlist_teams: list[str] | None = None, force_push_allowlist_usernames: list[str] | None = None, ignore_stale_approvals: bool = False, merge_whitelist_teams: list[str] | None = None, merge_whitelist_usernames: list[str] | None = None, priority: int = 0, protected_file_patterns: list[str] | None = None, push_whitelist_deploy_keys: bool = False, push_whitelist_teams: list[str] | None = None, push_whitelist_usernames: list[str] | None = None, require_signed_commits: bool = False, required_approvals: int = 0, rule_name: str = '', status_check_contexts: list[str] | None = None, unprotected_file_patterns: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Create a branch protections for a repository.
 
     Args:
@@ -1816,12 +2336,16 @@ async def repo_create_branch_protection(owner: str, repo: str, branch_name: str,
         approvals_whitelist_teams: Team names whose approvals count (e.g. ["value"]).
         approvals_whitelist_usernames: Usernames whose approvals count (e.g. ["value"]).
         block_admin_merge_override: Whether to block admin merge override: true or false.
+        block_on_codeowner_reviews: Block on codeowner reviews. true or false.
         block_on_official_review_requests: Whether to block on official review requests: true or false.
         block_on_outdated_branch: Whether to block merging on an outdated branch: true or false.
         block_on_rejected_reviews: Whether to block merging on rejected reviews: true or false.
         branch_name: Branch name to protect.
+        bypass_allowlist_teams: Bypass allowlist teams (e.g. ["value"]).
+        bypass_allowlist_usernames: Bypass allowlist usernames (e.g. ["value"]).
         dismiss_stale_approvals: Whether to dismiss stale approvals: true or false.
         enable_approvals_whitelist: Whether to enable the approvals whitelist: true or false.
+        enable_bypass_allowlist: Enable bypass allowlist. true or false.
         enable_force_push: Whether to enable force pushes: true or false.
         enable_force_push_allowlist: Whether to enable the force-push allowlist: true or false.
         enable_merge_whitelist: Whether to enable the merge whitelist: true or false.
@@ -1853,12 +2377,16 @@ async def repo_create_branch_protection(owner: str, repo: str, branch_name: str,
     if approvals_whitelist_teams is not None: args['approvals_whitelist_teams'] = approvals_whitelist_teams
     if approvals_whitelist_usernames is not None: args['approvals_whitelist_usernames'] = approvals_whitelist_usernames
     if block_admin_merge_override: args['block_admin_merge_override'] = block_admin_merge_override
+    if block_on_codeowner_reviews: args['block_on_codeowner_reviews'] = block_on_codeowner_reviews
     if block_on_official_review_requests: args['block_on_official_review_requests'] = block_on_official_review_requests
     if block_on_outdated_branch: args['block_on_outdated_branch'] = block_on_outdated_branch
     if block_on_rejected_reviews: args['block_on_rejected_reviews'] = block_on_rejected_reviews
     args['branch_name'] = branch_name
+    if bypass_allowlist_teams is not None: args['bypass_allowlist_teams'] = bypass_allowlist_teams
+    if bypass_allowlist_usernames is not None: args['bypass_allowlist_usernames'] = bypass_allowlist_usernames
     if dismiss_stale_approvals: args['dismiss_stale_approvals'] = dismiss_stale_approvals
     if enable_approvals_whitelist: args['enable_approvals_whitelist'] = enable_approvals_whitelist
+    if enable_bypass_allowlist: args['enable_bypass_allowlist'] = enable_bypass_allowlist
     if enable_force_push: args['enable_force_push'] = enable_force_push
     if enable_force_push_allowlist: args['enable_force_push_allowlist'] = enable_force_push_allowlist
     if enable_merge_whitelist: args['enable_merge_whitelist'] = enable_merge_whitelist
@@ -1955,7 +2483,7 @@ async def repo_get_branch_protection(owner: str, repo: str, name: str, include_a
 @mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Branch Protection", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_edit_branch_protection(owner: str, repo: str, name: str, approvals_whitelist_teams: list[str] | None = None, approvals_whitelist_usernames: list[str] | None = None, block_admin_merge_override: bool = False, block_on_official_review_requests: bool = False, block_on_outdated_branch: bool = False, block_on_rejected_reviews: bool = False, dismiss_stale_approvals: bool = False, enable_approvals_whitelist: bool = False, enable_force_push: bool = False, enable_force_push_allowlist: bool = False, enable_merge_whitelist: bool = False, enable_push: bool = False, enable_push_whitelist: bool = False, enable_status_check: bool = False, force_push_allowlist_deploy_keys: bool = False, force_push_allowlist_teams: list[str] | None = None, force_push_allowlist_usernames: list[str] | None = None, ignore_stale_approvals: bool = False, merge_whitelist_teams: list[str] | None = None, merge_whitelist_usernames: list[str] | None = None, priority: int = 0, protected_file_patterns: list[str] | None = None, push_whitelist_deploy_keys: bool = False, push_whitelist_teams: list[str] | None = None, push_whitelist_usernames: list[str] | None = None, require_signed_commits: bool = False, required_approvals: int = 0, status_check_contexts: list[str] | None = None, unprotected_file_patterns: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_edit_branch_protection(owner: str, repo: str, name: str, approvals_whitelist_teams: list[str] | None = None, approvals_whitelist_usernames: list[str] | None = None, block_admin_merge_override: bool = False, block_on_codeowner_reviews: bool = False, block_on_official_review_requests: bool = False, block_on_outdated_branch: bool = False, block_on_rejected_reviews: bool = False, bypass_allowlist_teams: list[str] | None = None, bypass_allowlist_usernames: list[str] | None = None, dismiss_stale_approvals: bool = False, enable_approvals_whitelist: bool = False, enable_bypass_allowlist: bool = False, enable_force_push: bool = False, enable_force_push_allowlist: bool = False, enable_merge_whitelist: bool = False, enable_push: bool = False, enable_push_whitelist: bool = False, enable_status_check: bool = False, force_push_allowlist_deploy_keys: bool = False, force_push_allowlist_teams: list[str] | None = None, force_push_allowlist_usernames: list[str] | None = None, ignore_stale_approvals: bool = False, merge_whitelist_teams: list[str] | None = None, merge_whitelist_usernames: list[str] | None = None, priority: int = 0, protected_file_patterns: list[str] | None = None, push_whitelist_deploy_keys: bool = False, push_whitelist_teams: list[str] | None = None, push_whitelist_usernames: list[str] | None = None, require_signed_commits: bool = False, required_approvals: int = 0, status_check_contexts: list[str] | None = None, unprotected_file_patterns: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Edit a branch protections for a repository.
 
     Args:
@@ -1965,11 +2493,15 @@ async def repo_edit_branch_protection(owner: str, repo: str, name: str, approval
         approvals_whitelist_teams: Team names whose approvals count (e.g. ["value"]).
         approvals_whitelist_usernames: Usernames whose approvals count (e.g. ["value"]).
         block_admin_merge_override: Whether to block admin merge override: true or false.
+        block_on_codeowner_reviews: Block on codeowner reviews. true or false.
         block_on_official_review_requests: Whether to block on official review requests: true or false.
         block_on_outdated_branch: Whether to block merging on an outdated branch: true or false.
         block_on_rejected_reviews: Whether to block merging on rejected reviews: true or false.
+        bypass_allowlist_teams: Bypass allowlist teams (e.g. ["value"]).
+        bypass_allowlist_usernames: Bypass allowlist usernames (e.g. ["value"]).
         dismiss_stale_approvals: Whether to dismiss stale approvals: true or false.
         enable_approvals_whitelist: Whether to enable the approvals whitelist: true or false.
+        enable_bypass_allowlist: Enable bypass allowlist. true or false.
         enable_force_push: Whether to enable force pushes: true or false.
         enable_force_push_allowlist: Whether to enable the force-push allowlist: true or false.
         enable_merge_whitelist: Whether to enable the merge whitelist: true or false.
@@ -2001,11 +2533,15 @@ async def repo_edit_branch_protection(owner: str, repo: str, name: str, approval
     if approvals_whitelist_teams is not None: args['approvals_whitelist_teams'] = approvals_whitelist_teams
     if approvals_whitelist_usernames is not None: args['approvals_whitelist_usernames'] = approvals_whitelist_usernames
     if block_admin_merge_override: args['block_admin_merge_override'] = block_admin_merge_override
+    if block_on_codeowner_reviews: args['block_on_codeowner_reviews'] = block_on_codeowner_reviews
     if block_on_official_review_requests: args['block_on_official_review_requests'] = block_on_official_review_requests
     if block_on_outdated_branch: args['block_on_outdated_branch'] = block_on_outdated_branch
     if block_on_rejected_reviews: args['block_on_rejected_reviews'] = block_on_rejected_reviews
+    if bypass_allowlist_teams is not None: args['bypass_allowlist_teams'] = bypass_allowlist_teams
+    if bypass_allowlist_usernames is not None: args['bypass_allowlist_usernames'] = bypass_allowlist_usernames
     if dismiss_stale_approvals: args['dismiss_stale_approvals'] = dismiss_stale_approvals
     if enable_approvals_whitelist: args['enable_approvals_whitelist'] = enable_approvals_whitelist
+    if enable_bypass_allowlist: args['enable_bypass_allowlist'] = enable_bypass_allowlist
     if enable_force_push: args['enable_force_push'] = enable_force_push
     if enable_force_push_allowlist: args['enable_force_push_allowlist'] = enable_force_push_allowlist
     if enable_merge_whitelist: args['enable_merge_whitelist'] = enable_merge_whitelist
@@ -2036,7 +2572,7 @@ async def repo_edit_branch_protection(owner: str, repo: str, name: str, approval
 @mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Repo List Branches", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_list_branches(owner: str, repo: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_list_branches(owner: str, repo: str, page: int = 1, limit: int = 50, q: str = "", include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """List a repository's branches.
 
     Args:
@@ -2044,6 +2580,7 @@ async def repo_list_branches(owner: str, repo: str, page: int = 1, limit: int = 
         repo: Repository name (e.g. demo).
         page: Page number (1-based) (Default: 1).
         limit: Page size (1-50) (Default: 50).
+        q: Search query.
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -2052,6 +2589,7 @@ async def repo_list_branches(owner: str, repo: str, page: int = 1, limit: int = 
     args['repo'] = repo
     if page is not None and page != "": args['page'] = page
     if limit is not None and limit != "": args['limit'] = limit
+    if q is not None and q != "": args['q'] = q
     args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_list_branches', get_user_token(), **args)
@@ -2148,6 +2686,33 @@ async def repo_rename_branch(owner: str, repo: str, branch: str, name: str, sudo
     args['name'] = name
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_rename_branch', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Update Branch", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_update_branch(owner: str, repo: str, branch: str, new_commit_id: str, force: bool = False, old_commit_id: str = '', sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Update a branch reference to a new commit.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        branch: Branch name (e.g. main).
+        force: Force update even if the change is not a fast-forward. true or false.
+        new_commit_id: New commit SHA (or any ref) the branch should point to.
+        old_commit_id: Expected old commit SHA of the branch; if provided it must match the current tip.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['branch'] = branch
+    if force: args['force'] = force
+    args['new_commit_id'] = new_commit_id
+    if old_commit_id != "": args['old_commit_id'] = old_commit_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_update_branch', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
 
@@ -2386,13 +2951,16 @@ async def repo_get_commit_pull_request(owner: str, repo: str, sha: str, include_
 @mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Compare Diff", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_compare_diff(owner: str, repo: str, compare_range: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_compare_diff(owner: str, repo: str, compare_range: str, output: Literal['diff', 'patch'] = 'diff', include_verification: bool = False, files: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Get commit comparison information.
 
     Args:
         owner: Repository owner username (e.g. solo).
         repo: Repository name (e.g. demo).
         compare_range: Comparison range in base...head format. Options: base...head range (e.g. main...feature).
+        output: return the raw comparison as `diff` or `patch` instead of JSON.
+        include_verification: Whether to include verification: true or false.
+        files: File operation list. true or false.
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -2400,6 +2968,9 @@ async def repo_compare_diff(owner: str, repo: str, compare_range: str, include_a
     args['owner'] = owner
     args['repo'] = repo
     args['compare_range'] = compare_range
+    if output is not None and output != "": args['output'] = output
+    if include_verification is not None and include_verification != "": args['include_verification'] = include_verification
+    if files is not None and files != "": args['files'] = files
     args["include_all_fields"] = include_all_fields
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_compare_diff', get_user_token(), **args)
@@ -2431,7 +3002,7 @@ async def repo_get_contents_list(owner: str, repo: str, ref: str = "", include_a
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Change Files", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_change_files(owner: str, repo: str, operation: Literal['create', 'update', 'upload', 'rename', 'delete'], path: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, message: str = '', new_branch: str = '', signoff: bool = False, content: str = '', from_path: str = '', sha: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_change_files(owner: str, repo: str, operation: Literal['create', 'update', 'upload', 'rename', 'delete'], path: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, force_push: bool = False, message: str = '', new_branch: str = '', signoff: bool = False, content: str = '', from_path: str = '', sha: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Modify multiple files in a repository.
 
     Args:
@@ -2441,6 +3012,7 @@ async def repo_change_files(owner: str, repo: str, operation: Literal['create', 
         branch: Branch name (e.g. main).
         committer: Commit committer identity.
         dates: Commit author and committer dates.
+        force_push: force_push  will do a force-push if the new branch already exists. true or false.
         message: Commit message (e.g. Fix login bug).
         new_branch: New branch name (e.g. feature).
         signoff: Add a Signed-off-by trailer by the committer at the end of the commit log message. true or false.
@@ -2459,6 +3031,7 @@ async def repo_change_files(owner: str, repo: str, operation: Literal['create', 
     if branch != "": args['branch'] = branch
     if committer is not None: args['committer'] = committer
     if dates is not None: args['dates'] = dates
+    if force_push: args['force_push'] = force_push
     if message != "": args['message'] = message
     if new_branch != "": args['new_branch'] = new_branch
     if signoff: args['signoff'] = signoff
@@ -2476,7 +3049,7 @@ async def repo_change_files(owner: str, repo: str, operation: Literal['create', 
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Delete File", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
-async def repo_delete_file(owner: str, repo: str, filepath: str, message: str, sha: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, new_branch: str = '', signoff: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_delete_file(owner: str, repo: str, filepath: str, message: str, sha: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, force_push: bool = False, new_branch: str = '', signoff: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Delete a file in a repository.
 
     Args:
@@ -2487,6 +3060,7 @@ async def repo_delete_file(owner: str, repo: str, filepath: str, message: str, s
         branch: Branch name (e.g. main).
         committer: Commit committer identity.
         dates: Commit author and committer dates.
+        force_push: force_push  will do a force-push if the new branch already exists. true or false.
         message: Commit message (e.g. Fix login bug).
         new_branch: New branch name (e.g. feature).
         sha: Commit or blob SHA (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).
@@ -2501,6 +3075,7 @@ async def repo_delete_file(owner: str, repo: str, filepath: str, message: str, s
     if branch != "": args['branch'] = branch
     if committer is not None: args['committer'] = committer
     if dates is not None: args['dates'] = dates
+    if force_push: args['force_push'] = force_push
     args['message'] = message
     if new_branch != "": args['new_branch'] = new_branch
     args['sha'] = sha
@@ -2538,7 +3113,7 @@ async def repo_get_contents(owner: str, repo: str, filepath: str, ref: str = "",
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Create File", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_create_file(owner: str, repo: str, filepath: str, content: str, message: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_create_file(owner: str, repo: str, filepath: str, content: str, message: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, force_push: bool = False, new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Create a file in a repository.
 
     Args:
@@ -2550,6 +3125,7 @@ async def repo_create_file(owner: str, repo: str, filepath: str, content: str, m
         committer: Commit committer identity.
         content: Plain-text file content (e.g. hello world).
         dates: Commit author and committer dates.
+        force_push: force_push  will do a force-push if the new branch already exists. true or false.
         message: Commit message (e.g. Fix login bug).
         new_branch: New branch name (e.g. feature).
         signoff: Add a Signed-off-by trailer by the committer at the end of the commit log message. true or false.
@@ -2565,6 +3141,7 @@ async def repo_create_file(owner: str, repo: str, filepath: str, content: str, m
     if committer is not None: args['committer'] = committer
     args['content'] = content
     if dates is not None: args['dates'] = dates
+    if force_push: args['force_push'] = force_push
     args['message'] = message
     if new_branch != "": args['new_branch'] = new_branch
     if signoff: args['signoff'] = signoff
@@ -2577,8 +3154,8 @@ async def repo_create_file(owner: str, repo: str, filepath: str, content: str, m
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Update File", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_update_file(owner: str, repo: str, filepath: str, content: str, message: str, sha: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, from_path: str = '', new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Update a file in a repository.
+async def repo_update_file(owner: str, repo: str, filepath: str, content: str, message: str, sha: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, force_push: bool = False, from_path: str = '', new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Update a file in a repository if SHA is set, or create the file if SHA is not set.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -2589,6 +3166,7 @@ async def repo_update_file(owner: str, repo: str, filepath: str, content: str, m
         committer: Commit committer identity.
         content: Plain-text file content (e.g. updated text).
         dates: Commit author and committer dates.
+        force_push: force_push  will do a force-push if the new branch already exists. true or false.
         from_path: Original file path for a rename or move (e.g. old.txt).
         message: Commit message (e.g. Fix login bug).
         new_branch: New branch name (e.g. feature).
@@ -2606,6 +3184,7 @@ async def repo_update_file(owner: str, repo: str, filepath: str, content: str, m
     if committer is not None: args['committer'] = committer
     args['content'] = content
     if dates is not None: args['dates'] = dates
+    if force_push: args['force_push'] = force_push
     if from_path != "": args['from_path'] = from_path
     args['message'] = message
     if new_branch != "": args['new_branch'] = new_branch
@@ -2620,7 +3199,7 @@ async def repo_update_file(owner: str, repo: str, filepath: str, content: str, m
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Apply Diff Patch", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_apply_diff_patch(owner: str, repo: str, patch: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, message: str = '', new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_apply_diff_patch(owner: str, repo: str, patch: str, author: Identity = None, branch: str = '', committer: Identity = None, dates: CommitDateOptions = None, force_push: bool = False, message: str = '', new_branch: str = '', signoff: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Apply diff patch to repository.
 
     Args:
@@ -2631,6 +3210,7 @@ async def repo_apply_diff_patch(owner: str, repo: str, patch: str, author: Ident
         committer: Commit committer identity.
         patch: Unified diff patch text.
         dates: Commit author and committer dates.
+        force_push: force_push  will do a force-push if the new branch already exists. true or false.
         message: Commit message (e.g. Fix login bug).
         new_branch: New branch name (e.g. feature).
         signoff: Add a Signed-off-by trailer by the committer at the end of the commit log message. true or false.
@@ -2645,6 +3225,7 @@ async def repo_apply_diff_patch(owner: str, repo: str, patch: str, author: Ident
     if committer is not None: args['committer'] = committer
     args['patch'] = patch
     if dates is not None: args['dates'] = dates
+    if force_push: args['force_push'] = force_push
     if message != "": args['message'] = message
     if new_branch != "": args['new_branch'] = new_branch
     if signoff: args['signoff'] = signoff
@@ -2728,7 +3309,7 @@ async def get_blob(owner: str, repo: str, sha: str, include_all_fields: bool = F
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Get Single Commit", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_get_single_commit(owner: str, repo: str, sha: str, include_stats: bool = False, include_verification: bool = False, include_files: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a single commit from a repository.
+    """Get a single commit from a repository, it has a GitHub-compatible alias "/repos/{owner}/{repo}/commits/{ref}".
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -2914,7 +3495,7 @@ async def issue_list_issues(owner: str, repo: str, state: Literal['closed', 'ope
 @mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Issue Create Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def issue_create_issue(owner: str, repo: str, body: str, title: str, assignee: str = '', assignees: list[str] | None = None, closed: bool = False, due_date: str = '', labels: list[int] | None = None, milestone: int = 0, ref: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def issue_create_issue(owner: str, repo: str, body: str, title: str, assignee: str = '', assignees: list[str] | None = None, closed: bool = False, due_date: str = '', labels: list[int] | None = None, milestone: int = 0, projects: list[int] | None = None, ref: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Create an issue.
 
     Args:
@@ -2927,6 +3508,7 @@ async def issue_create_issue(owner: str, repo: str, body: str, title: str, assig
         due_date: ISO 8601 format (2026-06-22T15:00:00-04:00).
         labels: List of label IDs (e.g. [1, 2]).
         milestone: Milestone ID (e.g. 1).
+        projects: list of project ids (e.g. ["value"]).
         ref: Git reference (e.g. main, refs/heads/main, or a commit SHA).
         title: Title (e.g. Sprint planning).
         include_all_fields: Default False (common fields only). Set True for all fields.
@@ -2942,6 +3524,7 @@ async def issue_create_issue(owner: str, repo: str, body: str, title: str, assig
     if due_date != "": args['due_date'] = due_date
     if labels is not None: args['labels'] = labels
     if milestone != 0: args['milestone'] = milestone
+    if projects is not None: args['projects'] = projects
     if ref != "": args['ref'] = ref
     args['title'] = title
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
@@ -3184,7 +3767,7 @@ async def issue_get_issue(owner: str, repo: str, index: int, include_all_fields:
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Edit Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def issue_edit_issue(owner: str, repo: str, index: int, assignee: str = '', assignees: list[str] | None = None, body: str = '', due_date: str = '', milestone: int = 0, ref: str = '', state: Literal['open', 'closed'] = '', title: str = '', unset_due_date: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def issue_edit_issue(owner: str, repo: str, index: int, assignee: str = '', assignees: list[str] | None = None, body: str = '', content_version: int = 0, due_date: str = '', milestone: int = 0, projects: list[int] | None = None, ref: str = '', state: Literal['open', 'closed'] = '', title: str = '', unset_due_date: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Edit an issue.
 
     Args:
@@ -3194,8 +3777,10 @@ async def issue_edit_issue(owner: str, repo: str, index: int, assignee: str = ''
         assignee: Assignee username (e.g. amanda).
         assignees: List of usernames (e.g. ["amanda"]).
         body: Body text in Markdown (e.g. Steps to reproduce...).
+        content_version: The current version of the issue content to detect conflicts during editing (e.g. 1).
         due_date: ISO 8601 format (2026-06-22T15:00:00-04:00).
         milestone: Milestone ID (e.g. 1).
+        projects: list of project ids to set (replaces existing projects) (e.g. ["value"]).
         ref: Git reference (e.g. main, refs/heads/main, or a commit SHA).
         state: State filter. Options: open or closed.
         title: Title (e.g. Sprint planning).
@@ -3210,8 +3795,10 @@ async def issue_edit_issue(owner: str, repo: str, index: int, assignee: str = ''
     if assignee != "": args['assignee'] = assignee
     if assignees is not None: args['assignees'] = assignees
     if body != "": args['body'] = body
+    if content_version != 0: args['content_version'] = content_version
     if due_date != "": args['due_date'] = due_date
     if milestone != 0: args['milestone'] = milestone
+    if projects is not None: args['projects'] = projects
     if ref != "": args['ref'] = ref
     if state is not None and state != '': args['state'] = state
     if title != "": args['title'] = title
@@ -3219,6 +3806,77 @@ async def issue_edit_issue(owner: str, repo: str, index: int, assignee: str = ''
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('issue_edit_issue', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Remove Assignees", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def issue_remove_assignees(owner: str, repo: str, index: int, assignees: list[str] | None = None, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Remove assignees from an issue.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        index: Issue number (e.g. 1).
+        assignees: List of usernames (e.g. ["amanda"]).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['index'] = index
+    if assignees is not None: args['assignees'] = assignees
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('issue_remove_assignees', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Add Assignees", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def issue_add_assignees(owner: str, repo: str, index: int, assignees: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Add assignees to an issue.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        index: Issue number (e.g. 1).
+        assignees: List of usernames (e.g. ["amanda"]).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['index'] = index
+    if assignees is not None: args['assignees'] = assignees
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('issue_add_assignees', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Check Assignee", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def issue_check_assignee(owner: str, repo: str, index: int, assignee: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Check if a user can be assigned to an issue.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        index: Issue number (e.g. 1).
+        assignee: Assignee username (e.g. amanda).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['index'] = index
+    args['assignee'] = assignee
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('issue_check_assignee', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
 
@@ -4158,6 +4816,31 @@ async def repo_create_key(owner: str, repo: str, public_key: str, title: str, re
     return data
 
 @mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Create Deploy Token", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_create_deploy_token(owner: str, repo: str, title: str, read_only: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Add a deploy token to a repository, it authenticates git over HTTPS.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        read_only: Whether the token is read-only: true or false.
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    if read_only: args['read_only'] = read_only
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_create_deploy_token', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Key", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def repo_delete_key(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -4503,7 +5186,7 @@ async def issue_get_milestone(owner: str, repo: str, id: str, include_all_fields
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Edit Milestone", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def issue_edit_milestone(owner: str, repo: str, id: str, description: str = '', due_on: str = '', state: Literal['open', 'closed'] = '', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def issue_edit_milestone(owner: str, repo: str, id: str, description: str = '', due_on: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Update a milestone.
 
     Args:
@@ -4523,7 +5206,7 @@ async def issue_edit_milestone(owner: str, repo: str, id: str, description: str 
     args['id'] = id
     if description != "": args['description'] = description
     if due_on != "": args['due_on'] = due_on
-    if state is not None and state != '': args['state'] = state
+    if state is not None and state != 'open': args['state'] = state
     if title != "": args['title'] = title
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
@@ -4593,6 +5276,419 @@ async def notify_read_repo_list(owner: str, repo: str, all: str = "", status_typ
     return data
 
 @mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_list_projects(owner: str, repo: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List a repository's projects.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        state: State filter. Options: open, closed, or all.
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    if state is not None and state != "": args['state'] = state
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_list_projects', get_user_token(), **args)
+    return {'projects': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Create Project", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_create_project(owner: str, repo: str, description: str, title: str, card_type: str = '', template_type: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a project owned by a repository.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        template_type: Template type: "none", "basic_kanban" or "bug_triage".
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    if card_type != "": args['card_type'] = card_type
+    args['description'] = description
+    if template_type != "": args['template_type'] = template_type
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_create_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def repo_delete_project(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_delete_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_get_project(owner: str, repo: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_get_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_edit_project(owner: str, repo: str, id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        state: State filter. Options: open, closed, or all.
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if card_type != "": args['card_type'] = card_type
+    if description != "": args['description'] = description
+    if state is not None and state != 'open': args['state'] = state
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_edit_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_list_project_columns(owner: str, repo: str, id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List a project's columns.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_list_project_columns', get_user_token(), **args)
+    return {'project_columns': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_create_project_column(owner: str, repo: str, id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a column in a project.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if color != "": args['color'] = color
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_create_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_move_project_columns(owner: str, repo: str, id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Reorder a project's columns.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_ids: Every column ID of the project, in the desired left-to-right order (e.g. ["value"]).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_ids'] = column_ids
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_move_project_columns', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def repo_delete_project_column(owner: str, repo: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_delete_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_get_project_column(owner: str, repo: str, id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_get_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_edit_project_column(owner: str, repo: str, id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        sorting: Position of the column within the project, between -128 and 127 (e.g. 1).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    if color != "": args['color'] = color
+    if sorting != 0: args['sorting'] = sorting
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_edit_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_set_default_project_column(owner: str, repo: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Set a project's default column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_set_default_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def repo_list_project_column_issues(owner: str, repo: str, id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List the issues in a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_list_project_column_issues', get_user_token(), **args)
+    return {'issues': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def repo_remove_issue_from_project_column(owner: str, repo: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Remove an issue from a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_remove_issue_from_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_add_issue_to_project_column(owner: str, repo: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Add an issue to a project column.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_add_issue_to_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_move_project_issue(owner: str, repo: str, id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Move an issue between a project's columns.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Resource ID (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        column_id: Target column to move the issue into (e.g. 1).
+        sorting: Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    args['issue_id'] = issue_id
+    args['column_id'] = column_id
+    if sorting != 0: args['sorting'] = sorting
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_move_project_issue', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Repo List Pull Requests", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_pull_requests(owner: str, repo: str, base_branch: str = "", state: Literal['open', 'closed', 'all'] = 'open', sort: Literal['oldest', 'recentupdate', 'recentclose', 'leastupdate', 'mostcomment', 'leastcomment', 'priority'] = 'oldest', milestone: int = 0, labels: list[int] | None = None, poster_username: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
@@ -4631,12 +5727,13 @@ async def repo_list_pull_requests(owner: str, repo: str, base_branch: str = "", 
 @mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Repo Create Pull Request", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_create_pull_request(owner: str, repo: str, base: str, body: str, head: str, title: str, assignee: str = '', assignees: list[str] | None = None, due_date: str = '', labels: list[int] | None = None, milestone: int = 0, reviewers: list[str] | None = None, team_reviewers: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_create_pull_request(owner: str, repo: str, base: str, body: str, head: str, title: str, allow_maintainer_edit: bool = False, assignee: str = '', assignees: list[str] | None = None, due_date: str = '', labels: list[int] | None = None, milestone: int = 0, reviewers: list[str] | None = None, team_reviewers: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Create a pull request.
 
     Args:
         owner: Repository owner username (e.g. solo).
         repo: Repository name (e.g. demo).
+        allow_maintainer_edit: Whether maintainers can edit the pull request. true or false.
         assignee: Assignee username (e.g. amanda).
         assignees: List of usernames (e.g. ["amanda"]).
         base: Base branch name (e.g. main).
@@ -4654,6 +5751,7 @@ async def repo_create_pull_request(owner: str, repo: str, base: str, body: str, 
     args: dict[str, Any] = {}
     args['owner'] = owner
     args['repo'] = repo
+    if allow_maintainer_edit: args['allow_maintainer_edit'] = allow_maintainer_edit
     if assignee != "": args['assignee'] = assignee
     if assignees is not None: args['assignees'] = assignees
     args['base'] = base
@@ -4668,6 +5766,48 @@ async def repo_create_pull_request(owner: str, repo: str, base: str, body: str, 
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_create_pull_request', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Resolve Pull Review Comment", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_resolve_pull_review_comment(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Resolve a pull request review comment.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Comment ID (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_resolve_pull_review_comment', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Unresolve Pull Review Comment", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_unresolve_pull_review_comment(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Unresolve a pull request review comment.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        id: Comment ID (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['id'] = id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_unresolve_pull_review_comment', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
 
@@ -4742,7 +5882,7 @@ async def repo_get_pull_request(owner: str, repo: str, index: int, include_all_f
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Pull Request", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_edit_pull_request(owner: str, repo: str, index: int, allow_maintainer_edit: bool = False, assignee: str = '', assignees: list[str] | None = None, base: str = '', body: str = '', due_date: str = '', labels: list[int] | None = None, milestone: int = 0, state: Literal['open', 'closed'] = '', title: str = '', unset_due_date: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_edit_pull_request(owner: str, repo: str, index: int, allow_maintainer_edit: bool = False, assignee: str = '', assignees: list[str] | None = None, base: str = '', body: str = '', content_version: int = 0, due_date: str = '', labels: list[int] | None = None, milestone: int = 0, state: Literal['open', 'closed'] = '', title: str = '', unset_due_date: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Update a pull request.
 
     Args:
@@ -4754,6 +5894,7 @@ async def repo_edit_pull_request(owner: str, repo: str, index: int, allow_mainta
         assignees: List of usernames (e.g. ["amanda"]).
         base: Base branch name (e.g. main).
         body: Body text in Markdown (e.g. Steps to reproduce...).
+        content_version: The current version of the pull request content to detect conflicts during editing (e.g. 1).
         due_date: ISO 8601 format (2026-06-22T15:00:00-04:00).
         labels: List of label IDs (e.g. [1, 2]).
         milestone: Milestone ID (e.g. 1).
@@ -4772,6 +5913,7 @@ async def repo_edit_pull_request(owner: str, repo: str, index: int, allow_mainta
     if assignees is not None: args['assignees'] = assignees
     if base != "": args['base'] = base
     if body != "": args['body'] = body
+    if content_version != 0: args['content_version'] = content_version
     if due_date != "": args['due_date'] = due_date
     if labels is not None: args['labels'] = labels
     if milestone != 0: args['milestone'] = milestone
@@ -4781,6 +5923,33 @@ async def repo_edit_pull_request(owner: str, repo: str, index: int, allow_mainta
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_edit_pull_request', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Create Pull Review Comment Reply", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def repo_create_pull_review_comment_reply(owner: str, repo: str, index: int, id: int, body: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Reply to a pull request review comment.
+
+    Args:
+        owner: Repository owner username (e.g. solo).
+        repo: Repository name (e.g. demo).
+        index: Pull request number (e.g. 1).
+        id: Comment ID (e.g. 1).
+        body: Body text in Markdown (e.g. Steps to reproduce...).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['owner'] = owner
+    args['repo'] = repo
+    args['index'] = index
+    args['id'] = id
+    args['body'] = body
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('repo_create_pull_review_comment_reply', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
 
@@ -4889,20 +6058,20 @@ async def repo_pull_request_is_merged(owner: str, repo: str, index: int, sudo: s
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Merge Pull Request", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_merge_pull_request(owner: str, repo: str, index: int, do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'], merge_commit_id: str = '', merge_message_field: str = '', merge_title_field: str = '', delete_branch_after_merge: bool = False, force_merge: bool = False, head_commit_id: str = '', merge_when_checks_succeed: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_merge_pull_request(owner: str, repo: str, index: int, do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'], delete_branch_after_merge: bool = False, force_merge: bool = False, head_commit_id: str = '', merge_commit_id: str = '', merge_message_field: str = '', merge_title_field: str = '', merge_when_checks_succeed: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Merge a pull request.
 
     Args:
         owner: Repository owner username (e.g. solo).
         repo: Repository name (e.g. demo).
         index: Pull request number (e.g. 1).
-        do: Merge method. Options: merge, rebase, rebase-merge, squash, fast-forward-only, or manually-merged.
-        merge_commit_id: Merge commit SHA.
-        merge_message_field: Merge commit message.
-        merge_title_field: Merge commit title.
         delete_branch_after_merge: Whether to delete the head branch after merging: true or false.
+        do: Merge method. Options: merge, rebase, rebase-merge, squash, fast-forward-only, or manually-merged.
         force_merge: Whether to force the merge: true or false.
         head_commit_id: Expected head commit SHA (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).
+        merge_commit_id: Merge commit SHA (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).
+        merge_message_field: Merge commit message.
+        merge_title_field: Merge commit title.
         merge_when_checks_succeed: Whether to merge automatically when checks succeed: true or false.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -4910,13 +6079,13 @@ async def repo_merge_pull_request(owner: str, repo: str, index: int, do: Literal
     args['owner'] = owner
     args['repo'] = repo
     args['index'] = index
+    if delete_branch_after_merge: args['delete_branch_after_merge'] = delete_branch_after_merge
     args['do'] = do
+    if force_merge: args['force_merge'] = force_merge
+    if head_commit_id != "": args['head_commit_id'] = head_commit_id
     if merge_commit_id != "": args['merge_commit_id'] = merge_commit_id
     if merge_message_field != "": args['merge_message_field'] = merge_message_field
     if merge_title_field != "": args['merge_title_field'] = merge_title_field
-    if delete_branch_after_merge: args['delete_branch_after_merge'] = delete_branch_after_merge
-    if force_merge: args['force_merge'] = force_merge
-    if head_commit_id != "": args['head_commit_id'] = head_commit_id
     if merge_when_checks_succeed: args['merge_when_checks_succeed'] = merge_when_checks_succeed
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_merge_pull_request', get_user_token(), **args)
@@ -5004,7 +6173,7 @@ async def repo_list_pull_reviews(owner: str, repo: str, index: int, page: int = 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Create Pull Review", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_create_pull_review(owner: str, repo: str, index: int, review_body: str, review_event: Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW'], review_commit_id: str = '', comment_path: str = '', comment_body: str = '', comment_new_position: int = 0, comment_old_position: int = 0, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a review to an pull request.
+    """Create a review to a pull request.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5088,8 +6257,8 @@ async def repo_get_pull_review(owner: str, repo: str, index: int, id: int, inclu
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Submit Pull Review", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
-async def repo_submit_pull_review(owner: str, repo: str, index: int, id: int, review_body: str = '', review_event: Literal['APPROVED', 'COMMENT', 'REQUEST_CHANGES'] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Submit a pending review to an pull request.
+async def repo_submit_pull_review(owner: str, repo: str, index: int, id: int, review_body: str = '', review_event: Literal['APPROVED', 'COMMENT', 'REQUEST_CHANGES'] = 'APPROVED', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Submit a pending review to a pull request.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5107,7 +6276,7 @@ async def repo_submit_pull_review(owner: str, repo: str, index: int, id: int, re
     args['index'] = index
     args['id'] = id
     if review_body != "": args['review_body'] = review_body
-    if review_event is not None and review_event != None: args['review_event'] = review_event
+    if review_event is not None and review_event != 'APPROVED': args['review_event'] = review_event
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('repo_submit_pull_review', get_user_token(), **args)
@@ -5218,7 +6387,7 @@ async def repo_update_pull_request(owner: str, repo: str, index: int, update_sty
 @mcp.tool(
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Repo List Releases", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def repo_list_releases(owner: str, repo: str, draft: bool = False, pre_release: bool = False, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def repo_list_releases(owner: str, repo: str, draft: bool = False, pre_release: bool = False, tag_filter: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """List a repo's releases.
 
     Args:
@@ -5226,6 +6395,7 @@ async def repo_list_releases(owner: str, repo: str, draft: bool = False, pre_rel
         repo: Repository name (e.g. demo).
         draft: Whether the release is a draft: true or false.
         pre_release: filter (exclude / include) pre-releases. true or false.
+        tag_filter: filter releases by tag. supports "*" as a wildcard (for example: v1*, *beta, *rc*).
         page: Page number (1-based) (Default: 1).
         limit: Page size (1-50) (Default: 50).
         include_all_fields: Default False (common fields only). Set True for all fields.
@@ -5236,6 +6406,7 @@ async def repo_list_releases(owner: str, repo: str, draft: bool = False, pre_rel
     args['repo'] = repo
     if draft is not None and draft != "": args['draft'] = draft
     if pre_release is not None and pre_release != "": args['pre_release'] = pre_release
+    if tag_filter is not None and tag_filter != "": args['tag_filter'] = tag_filter
     if page is not None and page != "": args['page'] = page
     if limit is not None and limit != "": args['limit'] = limit
     args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
@@ -6255,7 +7426,7 @@ async def org_get_team(id: int, include_all_fields: bool = False, sudo: str = ""
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Edit Team", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
-async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, description: str = '', includes_all_repositories: bool = False, permission: Literal['read', 'write', 'admin'] = 'read', units: list[str] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, description: str = '', includes_all_repositories: bool = False, permission: Literal['read', 'write', 'admin'] = 'read', units: list[str] | None = None, visibility: Literal['public', 'limited', 'private'] = 'public', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
     """Edit a team.
 
     Args:
@@ -6266,6 +7437,7 @@ async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, d
         name: Resource name (e.g. my-resource).
         permission: Permission level. Options: read, write, or admin.
         units: Repository units granted to the team. Options: repo.code, repo.issues, repo.ext_issues, repo.pulls, repo.releases, repo.wiki, repo.ext_wiki, repo.projects, repo.packages, or repo.actions.
+        visibility: Organization visibility. Options: public, limited, or private.
         include_all_fields: Default False (common fields only). Set True for all fields.
         sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
     """
@@ -6277,6 +7449,7 @@ async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, d
     args['name'] = name
     if permission is not None and permission != 'read': args['permission'] = permission
     if units is not None: args['units'] = units
+    if visibility is not None and visibility != 'public': args['visibility'] = visibility
     args["include_all_fields"] = ALLOW_ALL_AGGREGATE
     if sudo: args["sudo"] = sudo
     data = await get_client().call('org_edit_team', get_user_token(), **args)
@@ -6624,6 +7797,355 @@ async def org_list_current_user_orgs(page: int = 1, limit: int = 50, include_all
     if sudo: args["sudo"] = sudo
     data = await get_client().call('org_list_current_user_orgs', get_user_token(), **args)
     return {'organizations': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_list_projects(state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List your projects.
+
+    Args:
+        state: State filter. Options: open, closed, or all.
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    if state is not None and state != "": args['state'] = state
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_list_projects', get_user_token(), **args)
+    return {'projects': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Create Project", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_create_project(description: str, title: str, card_type: str = '', template_type: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a project owned by the authenticated user.
+
+    Args:
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        template_type: Template type: "none", "basic_kanban" or "bug_triage".
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    if card_type != "": args['card_type'] = card_type
+    args['description'] = description
+    if template_type != "": args['template_type'] = template_type
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_create_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_delete_project(id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_delete_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_get_project(id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_get_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_edit_project(id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        card_type: Card type: "text_only" or "images_and_text".
+        description: Description text (e.g. Short description).
+        state: State filter. Options: open, closed, or all.
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    if card_type != "": args['card_type'] = card_type
+    if description != "": args['description'] = description
+    if state is not None and state != 'open': args['state'] = state
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_edit_project', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_list_project_columns(id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List a project's columns.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_list_project_columns', get_user_token(), **args)
+    return {'project_columns': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_create_project_column(id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Create a column in a project.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    if color != "": args['color'] = color
+    args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_create_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_move_project_columns(id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Reorder a project's columns.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_ids: Every column ID of the project, in the desired left-to-right order (e.g. ["value"]).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_ids'] = column_ids
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_move_project_columns', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_delete_project_column(id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Delete a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_delete_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_get_project_column(id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Get a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    args["include_all_fields"] = include_all_fields
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_get_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_edit_project_column(id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Edit a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        color: Hex color code (e.g. #d73a4a).
+        sorting: Position of the column within the project, between -128 and 127 (e.g. 1).
+        title: Title (e.g. Sprint planning).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    if color != "": args['color'] = color
+    if sorting != 0: args['sorting'] = sorting
+    if title != "": args['title'] = title
+    args["include_all_fields"] = ALLOW_ALL_AGGREGATE
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_edit_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_set_default_project_column(id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Set a project's default column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_set_default_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_list_project_column_issues(id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List the issues in a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_list_project_column_issues', get_user_token(), **args)
+    return {'issues': json_to_toon(data)}
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
+)
+async def user_current_remove_issue_from_project_column(id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Remove an issue from a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_remove_issue_from_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_add_issue_to_project_column(id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Add an issue to a project column.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        column_id: id of the column (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['column_id'] = column_id
+    args['issue_id'] = issue_id
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_add_issue_to_project_column', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
+
+@mcp.tool(
+    tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+)
+async def user_current_move_project_issue(id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """Move an issue between a project's columns.
+
+    Args:
+        id: Resource ID (e.g. 1).
+        issue_id: global id of the issue, not the repository-local index (e.g. 1).
+        column_id: Target column to move the issue into (e.g. 1).
+        sorting: Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first (e.g. 1).
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['id'] = id
+    args['issue_id'] = issue_id
+    args['column_id'] = column_id
+    if sorting != 0: args['sorting'] = sorting
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_current_move_project_issue', get_user_token(), **args)
+    if isinstance(data, list): return {"items": data}
+    return data
 
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
@@ -7028,6 +8550,30 @@ async def org_get_user_permissions(username: str, org: str, include_all_fields: 
     data = await get_client().call('org_get_user_permissions', get_user_token(), **args)
     if isinstance(data, list): return {"items": data}
     return data
+
+@mcp.tool(
+    tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+)
+async def user_list_projects(username: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
+    """List a user's projects.
+
+    Args:
+        username: Username (e.g. amanda).
+        state: State filter. Options: open, closed, or all.
+        page: Page number (1-based) (Default: 1).
+        limit: Page size (1-50) (Default: 50).
+        include_all_fields: Default False (common fields only). Set True for all fields.
+        sudo: Admin-only username to impersonate (e.g. amanda; Default: empty).
+    """
+    args: dict[str, Any] = {}
+    args['username'] = username
+    if state is not None and state != "": args['state'] = state
+    if page is not None and page != "": args['page'] = page
+    if limit is not None and limit != "": args['limit'] = limit
+    args["include_all_fields"] = include_all_fields if ALLOW_ALL_AGGREGATE else False
+    if sudo: args["sudo"] = sudo
+    data = await get_client().call('user_list_projects', get_user_token(), **args)
+    return {'projects': json_to_toon(data)}
 
 @mcp.tool(
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)

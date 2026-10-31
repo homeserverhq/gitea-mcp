@@ -673,6 +673,17 @@ async def setup(session: MCPSession) -> None:
     )
     await run(
         session,
+        "S017b add_assignee",
+        "issue_add_assignees",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "index": state["issue_index"],
+            "assignees": [TARGET_USER],
+        },
+    )
+    await run(
+        session,
         "S018 add_time",
         "issue_add_time",
         {
@@ -1100,6 +1111,19 @@ async def setup(session: MCPSession) -> None:
     )
     if isinstance(data, dict):
         state["org_repo"] = data.get("name") or f"t{rid}-orgrepo"
+    data = await run(
+        session,
+        "S044a2 org_issue",
+        "issue_create_issue",
+        {
+            "owner": state["org"],
+            "repo": state.get("org_repo", f"t{rid}-orgrepo"),
+            "title": f"t{rid}-orgissue",
+            "body": "org project issue",
+        },
+    )
+    if isinstance(data, dict):
+        state["org_issue_id"] = data.get("id")
     await run(
         session,
         "S044 team_repo",
@@ -1127,6 +1151,144 @@ async def setup(session: MCPSession) -> None:
         {
             "org": state["org"],
             "username": TARGET_USER,
+        },
+    )
+
+    data = await run(
+        session,
+        "S053a repo_project",
+        "repo_create_project",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "title": f"t{rid}-project",
+            "description": "repo project",
+        },
+    )
+    capture("repo_create_project", {}, data)
+    data = await run(
+        session,
+        "S053b repo_project_column",
+        "repo_create_project_column",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "id": state["project_id"],
+            "title": f"t{rid}-column",
+        },
+    )
+    capture("repo_create_project_column", {}, data)
+    data = await run(
+        session,
+        "S053b2 repo_project_column2",
+        "repo_create_project_column",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "id": state["project_id"],
+            "title": f"t{rid}-column2",
+        },
+    )
+    if isinstance(data, dict):
+        state["column2_id"] = data.get("id")
+    await run(
+        session,
+        "S053c repo_project_issue",
+        "repo_add_issue_to_project_column",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "id": state["project_id"],
+            "column_id": state["column_id"],
+            "issue_id": state["issue_id"],
+        },
+    )
+
+    data = await run(
+        session,
+        "S053d org_project",
+        "org_create_project",
+        {
+            "org": state["org"],
+            "title": f"t{rid}-orgproject",
+            "description": "org project",
+        },
+    )
+    capture("org_create_project", {}, data)
+    data = await run(
+        session,
+        "S053e org_project_column",
+        "org_create_project_column",
+        {
+            "org": state["org"],
+            "id": state["org_project_id"],
+            "title": f"t{rid}-orgcolumn",
+        },
+    )
+    capture("org_create_project_column", {}, data)
+    data = await run(
+        session,
+        "S053e2 org_project_column2",
+        "org_create_project_column",
+        {
+            "org": state["org"],
+            "id": state["org_project_id"],
+            "title": f"t{rid}-orgcolumn2",
+        },
+    )
+    if isinstance(data, dict):
+        state["org_column2_id"] = data.get("id")
+    await run(
+        session,
+        "S053f org_project_issue",
+        "org_add_issue_to_project_column",
+        {
+            "org": state["org"],
+            "id": state["org_project_id"],
+            "column_id": state["org_column_id"],
+            "issue_id": state.get("org_issue_id", 0),
+        },
+    )
+
+    data = await run(
+        session,
+        "S053g user_project",
+        "user_current_create_project",
+        {
+            "title": f"t{rid}-userproject",
+            "description": "user project",
+        },
+    )
+    capture("user_current_create_project", {}, data)
+    data = await run(
+        session,
+        "S053h user_project_column",
+        "user_current_create_project_column",
+        {
+            "id": state["user_project_id"],
+            "title": f"t{rid}-usercolumn",
+        },
+    )
+    capture("user_current_create_project_column", {}, data)
+    data = await run(
+        session,
+        "S053h2 user_project_column2",
+        "user_current_create_project_column",
+        {
+            "id": state["user_project_id"],
+            "title": f"t{rid}-usercolumn2",
+        },
+    )
+    if isinstance(data, dict):
+        state["user_column2_id"] = data.get("id")
+    await run(
+        session,
+        "S053i user_project_issue",
+        "user_current_add_issue_to_project_column",
+        {
+            "id": state["user_project_id"],
+            "column_id": state["user_column_id"],
+            "issue_id": state["issue_id"],
         },
     )
 
@@ -1581,10 +1743,6 @@ def build_args(tool: str, spec: dict) -> dict:
             "repo": state.get("org_repo", ""),
         },
 
-        "repo_update_branch": {
-            "new_commit_id": state.get("sha"),
-            "old_commit_id": state.get("sha"),
-        },
         "repo_rename_branch": {"branch": state.get("rename_branch", ""), "name": f"t{rid}-renamed"},
         "issue_edit_issue": {"title": f"t{rid}-issue-updated", "assignees": [TARGET_USER]},
         "issue_edit_comment": {"body": "updated comment"},
@@ -1620,6 +1778,27 @@ def build_args(tool: str, spec: dict) -> dict:
             "id": state.get("user_project_id", 0),
             "event": "item_added_to_project",
         },
+        "repo_edit_project": {"title": f"t{rid}-project-updated", "description": "updated repo project"},
+        "repo_edit_project_column": {"title": f"t{rid}-column-updated"},
+        "repo_move_project_columns": {"column_ids": [state.get("column2_id", 0), state.get("column_id", 0)]},
+        "repo_move_project_issue": {"column_id": state.get("column2_id", 0)},
+        "repo_set_default_project_column": {"column_id": state.get("column2_id", 0)},
+        "repo_remove_issue_from_project_column": {"column_id": state.get("column2_id", 0), "issue_id": state.get("issue_id", 0)},
+        "repo_update_branch": {"new_commit_id": state.get("sha"), "force": True},
+        "issue_add_assignees": {"assignees": [TARGET_USER]},
+        "issue_remove_assignees": {"assignees": [TARGET_USER]},
+        "org_edit_project": {"title": f"t{rid}-orgproject-updated", "description": "updated org project"},
+        "org_edit_project_column": {"title": f"t{rid}-orgcolumn-updated"},
+        "org_move_project_columns": {"column_ids": [state.get("org_column2_id", 0), state.get("org_column_id", 0)]},
+        "org_move_project_issue": {"column_id": state.get("org_column2_id", 0), "issue_id": state.get("org_issue_id", 0)},
+        "org_set_default_project_column": {"column_id": state.get("org_column2_id", 0)},
+        "org_remove_issue_from_project_column": {"column_id": state.get("org_column2_id", 0), "issue_id": state.get("org_issue_id", 0)},
+        "user_current_edit_project": {"title": f"t{rid}-userproject-updated", "description": "updated user project"},
+        "user_current_edit_project_column": {"title": f"t{rid}-usercolumn-updated"},
+        "user_current_move_project_columns": {"column_ids": [state.get("user_column2_id", 0), state.get("user_column_id", 0)]},
+        "user_current_move_project_issue": {"column_id": state.get("user_column2_id", 0)},
+        "user_current_set_default_project_column": {"column_id": state.get("user_column2_id", 0)},
+        "user_current_remove_issue_from_project_column": {"column_id": state.get("user_column2_id", 0), "issue_id": state.get("issue_id", 0)},
         "repo_create_branch": {"new_branch_name": f"t{rid}-extra"},
         "repo_create_tag": {"tag_name": f"v{rid}-extra"},
         "repo_create_release": {
@@ -1932,8 +2111,14 @@ async def main() -> None:
                 "issue_remove_label", "issue_delete_comment_reaction",
                 "issue_delete_issue_reaction", "issue_delete_stop_watch",
                 "issue_delete_subscription", "issue_delete_time",
+                "repo_remove_issue_from_project_column", "repo_delete_project_column",
+                "org_remove_issue_from_project_column", "org_delete_project_column",
+                "user_current_remove_issue_from_project_column",
+                "user_current_delete_project_column", "delete_package_version",
             ):
                 return (0, t)
+            if t in ("repo_delete_project", "org_delete_project", "user_current_delete_project", "delete_package"):
+                return (2, t)
             if t in (
                 "issue_clear_labels", "issue_reset_time",
                 "issue_remove_issue_blocking", "issue_remove_issue_dependencies",
@@ -1966,17 +2151,18 @@ async def main() -> None:
             session, "FINAL delete_team3", "org_delete_team",
             {"id": state.get("team3_id", 0)},
         )
-        org_repos_data = await run(
-            session, "FINAL list_org_repos", "org_list_repos",
+        await run(
+            session, "FINAL delete_org_repos", "org_delete_repos",
             {"org": state.get("org", "")},
         )
-        for r in list_items(org_repos_data):
-            repo_name = r.get("name")
-            if repo_name:
-                await run(
-                    session, f"FINAL delete_org_repo_{repo_name}", "repo_delete",
-                    {"owner": state.get("org", ""), "repo": repo_name},
-                )
+        for _ in range(15):
+            remaining = await run(
+                session, "FINAL wait_org_repos", "org_list_repos",
+                {"org": state.get("org", "")},
+            )
+            if not list_items(remaining):
+                break
+            await asyncio.sleep(1)
         data = await run(
             session, "FINAL rename_org", "rename_org",
             {"org": state.get("org", ""), "new_name": f"t{rid}-new_name"},
