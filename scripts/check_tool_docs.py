@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import ast
+import collections
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "src" / "main.py"
+sys.path.insert(0, str(ROOT))
+from src.client import TOOL_SPECS
 DATE_PHRASE = "ISO 8601 format (2026-06-22T15:00:00-04:00)."
 DATE_NAMES = {"since", "before", "until", "due_date", "due_on", "last_read_at", "created", "date"}
 DATE_EXCEPTIONS = {("issue_search_issues", "created")}
@@ -44,6 +47,57 @@ def main() -> int:
         and any(ast.unparse(d).startswith("mcp.tool") for d in n.decorator_list)
     ]
     errors: list[str] = []
+    groups = {"basic", "primary", "advanced"}
+    service = "gitea"
+    destructive_exceptions = {"issue_unlock_issue", "repo_cancel_scheduled_auto_merge"}
+    group_counts: collections.Counter[str] = collections.Counter()
+
+    for func in tools:
+        decorators = [
+            d for d in func.decorator_list
+            if isinstance(d, ast.Call)
+            and isinstance(d.func, ast.Attribute)
+            and d.func.attr == "tool"
+        ]
+        if len(decorators) != 1:
+            errors.append(f"{func.name}: expected exactly one mcp.tool decorator")
+            continue
+        dec = decorators[0]
+        kwargs = {k.arg: k.value for k in dec.keywords}
+        if set(kwargs) != {"tags", "annotations"}:
+            errors.append(f"{func.name}: decorator must contain only tags and annotations")
+        try:
+            tag_values = set(ast.literal_eval(kwargs["tags"]))
+        except Exception:
+            tag_values = set()
+        if len(tag_values) != 2:
+            errors.append(f"{func.name}: expected exactly two tags, got {sorted(tag_values)}")
+        if service not in tag_values:
+            errors.append(f"{func.name}: missing service tag {service}")
+        if len(tag_values & groups) != 1:
+            errors.append(f"{func.name}: expected exactly one group tag, got {sorted(tag_values & groups)}")
+        else:
+            group_counts[next(iter(tag_values & groups))] += 1
+        ann = kwargs.get("annotations")
+        if not isinstance(ann, ast.Call):
+            errors.append(f"{func.name}: missing ToolAnnotations")
+        else:
+            ak = {k.arg: k.value for k in ann.keywords}
+            expected_title = func.name.replace("_", " ").title()
+            title = ak.get("title")
+            if not isinstance(title, ast.Constant) or title.value != expected_title:
+                errors.append(f"{func.name}: title must be {expected_title!r}")
+            method = TOOL_SPECS.get(func.name, {}).get("method", "PUT")
+            expected = {
+                "readOnlyHint": method == "GET",
+                "destructiveHint": method == "DELETE" and func.name not in destructive_exceptions,
+                "idempotentHint": method != "POST",
+                "openWorldHint": func.name == "repo_migrate",
+            }
+            for key, want in expected.items():
+                node = ak.get(key)
+                if not isinstance(node, ast.Constant) or bool(node.value) != want:
+                    errors.append(f"{func.name}: {key} must be {want}")
 
     for func in tools:
         doc = ast.get_docstring(func) or ""
@@ -125,7 +179,10 @@ def main() -> int:
             print(f" - {err}")
         return 1
 
-    print(f"PASS: {len(tools)} tools validated")
+    print(
+        f"PASS: {len(tools)} tools validated; "
+        f"basic={group_counts['basic']}, primary={group_counts['primary']}, advanced={group_counts['advanced']}"
+    )
     return 0
 
 

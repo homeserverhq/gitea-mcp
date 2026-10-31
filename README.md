@@ -22,7 +22,7 @@ with full CRUD, search, and repository management.
   default. Full objects are available via an `include_all_fields` flag.
 - **🧪 Comprehensive Testing** — 299 automated tests covering all tool
   domains, run via the test runner pipeline.
-- **🏷️ Tool Annotations** — All tools expose standard MCP ToolAnnotations hints (readOnlyHint, destructiveHint, idempotentHint, openWorldHint). The tags field carries grouping metadata (read/write/delete + gitea).
+- **🏷️ Tool Annotations** — All tools expose standard MCP ToolAnnotations hints (readOnlyHint, destructiveHint, idempotentHint, openWorldHint). The tags field carries grouping metadata (basic/primary/advanced + gitea).
 
 ## 🔧 Environment Variables
 
