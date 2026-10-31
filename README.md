@@ -83,9 +83,9 @@ The server implements 257 MCP tools organized into the following categories:
 ### 🏗️ Repositories (23 tools)
 
 - `get_version` — Get the Gitea server version
-- `create_current_user_repo` — Create a repository
+- `create_current_user_repo` — Create a repository for the authenticated user
 - `create_org_repo` — Create a repository in an organization
-- `create_org_repo_deprecated` — Create a repository in an organization
+- `create_org_repo_deprecated` — Create a repository in an organization using the deprecated /org route
 - `repo_get` — Get a repository
 - `repo_get_by_id` — Get a repository by ID
 - `repo_search` — Search for repositories
@@ -96,7 +96,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `create_fork` — Fork a repository
 - `list_forks` — List a repository's forks
 - `repo_merge_upstream` — Merge a branch from upstream
-- `repo_get_assignees` — List users who can be assigned to issues
+- `repo_get_assignees` — List users who can be assigned to issues in a repository
 - `repo_get_reviewers` — List users who can be requested as reviewers
 - `repo_get_languages` — Get repository language statistics
 - `repo_get_licenses` — Get repository licenses
@@ -104,7 +104,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_get_issue_templates` — Get available issue templates for a repository
 - `repo_list_pinned_issues` — List pinned issues
 - `repo_list_pinned_pull_requests` — List pinned pull requests
-- `repo_check_assignee` — Check if a user can be assigned to issues in a repository
+- `repo_check_assignee` — Check whether a user can be assigned to issues in a repository
 
 ### 🌿 Branches & Tags (10 tools)
 
@@ -151,37 +151,37 @@ The server implements 257 MCP tools organized into the following categories:
 - `issue_delete` — Delete an issue
 - `issue_add_assignees` — Add assignees to an issue
 - `issue_remove_assignees` — Remove assignees from an issue
-- `issue_check_assignee` — Check if a user can be assigned to an issue
+- `issue_check_assignee` — Check whether a user is assigned to an issue
 
 ### 💬 Issue Comments & Timeline (9 tools)
 
-- `issue_get_repo_comments` — List all comments in a repository
-- `issue_get_comments` — List all comments on an issue
-- `issue_get_comment` — Get a comment
-- `issue_create_comment` — Add a comment to an issue
-- `issue_edit_comment` — Edit a comment
-- `issue_delete_comment` — Delete a comment
-- `issue_edit_comment_deprecated` — Edit a comment
-- `issue_delete_comment_deprecated` — Delete a comment
-- `issue_get_comments_and_timeline` — List all comments and events on an issue
+- `issue_get_repo_comments` — List issue comments across a repository
+- `issue_get_comments` — List comments on an issue
+- `issue_get_comment` — Get an issue comment by comment ID
+- `issue_create_comment` — Create a comment on an issue
+- `issue_edit_comment` — Edit a repository issue comment by comment ID
+- `issue_delete_comment` — Delete a repository issue comment by comment ID
+- `issue_edit_comment_deprecated` — Edit an issue comment by issue number and comment ID using the deprecated route
+- `issue_delete_comment_deprecated` — Delete an issue comment by issue number and comment ID using the deprecated route
+- `issue_get_comments_and_timeline` — List comments and timeline events for an issue
 
 ### 🏷️ Labels (15 tools)
 
-- `org_list_labels` — List an organization's labels
-- `org_create_label` — Create a label for an organization
-- `org_delete_label` — Delete a label
-- `org_get_label` — Get a single label
-- `org_edit_label` — Update a label
+- `org_list_labels` — List organization labels
+- `org_create_label` — Create an organization label
+- `org_delete_label` — Delete an organization label
+- `org_get_label` — Get an organization label
+- `org_edit_label` — Update an organization label
 - `issue_clear_labels` — Remove all labels from an issue
-- `issue_get_labels` — Get an issue's labels
-- `issue_add_label` — Add a label to an issue
-- `issue_replace_labels` — Replace an issue's labels
+- `issue_get_labels` — List labels on an issue
+- `issue_add_label` — Add labels to an issue
+- `issue_replace_labels` — Replace labels on an issue
 - `issue_remove_label` — Remove a label from an issue
-- `issue_list_labels` — Get all of a repository's labels
-- `issue_create_label` — Create a label
-- `issue_delete_label` — Delete a label
-- `issue_get_label` — Get a single label
-- `issue_edit_label` — Update a label
+- `issue_list_labels` — List repository labels
+- `issue_create_label` — Create a repository label
+- `issue_delete_label` — Delete a repository label
+- `issue_get_label` — Get a repository label
+- `issue_edit_label` — Update a repository label
 
 ### 🎯 Milestones (5 tools)
 
@@ -257,7 +257,7 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_delete_pull_review` — Delete a specific review from a pull request
 - `repo_get_pull_review` — Get a specific review for a pull request
 - `repo_submit_pull_review` — Submit a pending review to a pull request
-- `repo_get_pull_review_comments` — Get a specific review for a pull request
+- `repo_get_pull_review_comments` — List comments for a specific pull request review
 - `repo_dismiss_pull_review` — Dismiss a review for a pull request
 - `repo_un_dismiss_pull_review` — Cancel to dismiss a review for a pull request
 - `repo_resolve_pull_review_comment` — Resolve a pull request review comment
@@ -315,10 +315,10 @@ The server implements 257 MCP tools organized into the following categories:
 - `repo_delete_key` — Delete a key from a repository
 - `repo_get_key` — Get a repository deploy key by ID
 - `repo_create_deploy_token` — Add a deploy token to a repository, it authenticates git over HTTPS
-- `repo_list_teams` — List a repository's teams
-- `repo_delete_team` — Delete a team from a repository
-- `repo_check_team` — Check if a team is assigned to a repository
-- `repo_add_team` — Add a team to a repository
+- `repo_list_teams` — List teams assigned to a repository
+- `repo_delete_team` — Remove a team from a repository
+- `repo_check_team` — Check whether a team is assigned to a repository
+- `repo_add_team` — Assign a team to a repository
 
 ### 🏢 Organizations (16 tools)
 
@@ -336,116 +336,116 @@ The server implements 257 MCP tools organized into the following categories:
 - `org_is_public_member` — Check if a user is a public member of an organization
 - `org_publicize_member` — Publicize a user's membership
 - `rename_org` — Rename an organization
-- `org_list_repos` — List an organization's repos
+- `org_list_repos` — List repositories in an organization
 - `org_delete_repos` — Delete all repositories in an organization
 
 ### 👨‍👩‍👧‍👦 Teams (15 tools)
 
-- `org_list_teams` — List an organization's teams
-- `org_create_team` — Create a team
-- `team_search` — Search for teams within an organization
-- `org_delete_team` — Delete a team
-- `org_get_team` — Get a team
-- `org_edit_team` — Edit a team
-- `org_list_team_activity_feeds` — List a team's activity feeds
-- `org_list_team_members` — List a team's members
-- `org_remove_team_member` — Remove a team member
-- `org_list_team_member` — List a particular member of team
-- `org_add_team_member` — Add a team member
-- `org_list_team_repos` — List a team's repos
-- `org_remove_team_repository` — Remove a repository from a team
-- `org_list_team_repo` — List a particular repo of team
-- `org_add_team_repository` — Add a repository to a team
+- `org_list_teams` — List teams in an organization
+- `org_create_team` — Create a team in an organization
+- `team_search` — Search for teams in an organization
+- `org_delete_team` — Delete an organization team
+- `org_get_team` — Get an organization team
+- `org_edit_team` — Edit an organization team
+- `org_list_team_activity_feeds` — List activity feeds for an organization team
+- `org_list_team_members` — List members of an organization team
+- `org_remove_team_member` — Remove a member from an organization team
+- `org_list_team_member` — Get an organization team member
+- `org_add_team_member` — Add a member to an organization team
+- `org_list_team_repos` — List repositories assigned to an organization team
+- `org_remove_team_repository` — Remove a repository from an organization team
+- `org_list_team_repo` — Get a repository assigned to an organization team
+- `org_add_team_repository` — Assign a repository to an organization team
 
 ### 👤 Users (19 tools)
 
 - `user_get_current` — Get the authenticated user
-- `user_current_list_followers` — List the authenticated user's followers
-- `user_current_list_following` — List the users that the authenticated user is following
+- `user_current_list_followers` — List followers of the authenticated user
+- `user_current_list_following` — List users followed by the authenticated user
 - `user_current_delete_follow` — Unfollow a user
 - `user_current_check_following` — Check whether a user is followed by the authenticated user
 - `user_current_put_follow` — Follow a user
 - `user_search` — Search for users
-- `user_get` — Get a user
-- `user_list_activity_feeds` — List a user's activity feeds
-- `user_list_followers` — List the given user's followers
-- `user_list_following` — List the users that the given user is following
+- `user_get` — Get a user by username
+- `user_list_activity_feeds` — List activity feeds for a specified user
+- `user_list_followers` — List followers of a specified user
+- `user_list_following` — List users followed by a specified user
 - `user_check_following` — Check if one user is following another user
-- `user_list_gpg_keys` — List the given user's GPG keys
-- `user_get_heatmap_data` — Get a user's heatmap
-- `user_list_keys` — List the given user's public keys
-- `user_list_teams` — List all the teams a user belongs to
-- `org_list_current_user_orgs` — List the current user's organizations
-- `org_list_user_orgs` — List a user's organizations
-- `org_get_user_permissions` — Get user permissions in organization
+- `user_list_gpg_keys` — List GPG keys for a specified user
+- `user_get_heatmap_data` — Get contribution heatmap data for a specified user
+- `user_list_keys` — List public SSH keys for a specified user
+- `user_list_teams` — List teams for the authenticated user
+- `org_list_current_user_orgs` — List organizations for the authenticated user
+- `org_list_user_orgs` — List organizations for a specified user
+- `org_get_user_permissions` — Get a user's permissions in an organization
 
 ### 📂 User Repositories & Subscriptions (9 tools)
 
-- `user_current_list_repos` — List the repos that the authenticated user owns
-- `user_list_repos` — List the repos owned by the given user
-- `user_current_list_starred` — The repos that the authenticated user has starred
-- `user_list_starred` — The repos that the given user has starred
-- `user_current_list_subscriptions` — List repositories watched by the authenticated user
-- `user_list_subscriptions` — List the repositories watched by a user
+- `user_current_list_repos` — List repositories owned by the authenticated user
+- `user_list_repos` — List repositories owned by a specified user
+- `user_current_list_starred` — List repositories starred by the authenticated user
+- `user_list_starred` — List repositories starred by a specified user
+- `user_current_list_subscriptions` — List repository subscriptions for the authenticated user
+- `user_list_subscriptions` — List repository subscriptions for a specified user
 - `user_current_check_subscription` — Check if the current user is watching a repo
 - `user_current_put_subscription` — Watch a repo
 - `user_current_delete_subscription` — Unwatch a repo
 
 ### 📊 Projects (49 tools)
 
-- `org_list_projects` — List an organization's projects
+- `org_list_projects` — List projects owned by an organization
 - `org_create_project` — Create a project owned by an organization
-- `org_delete_project` — Delete a project
-- `org_get_project` — Get a project
-- `org_edit_project` — Edit a project
-- `org_list_project_columns` — List a project's columns
-- `org_create_project_column` — Create a column in a project
-- `org_move_project_columns` — Reorder a project's columns
-- `org_delete_project_column` — Delete a project column
-- `org_get_project_column` — Get a project column
-- `org_edit_project_column` — Edit a project column
-- `org_set_default_project_column` — Set a project's default column
-- `org_list_project_column_issues` — List the issues in a project column
-- `org_remove_issue_from_project_column` — Remove an issue from a project column
-- `org_add_issue_to_project_column` — Add an issue to a project column
-- `org_move_project_issue` — Move an issue between a project's columns
-- `repo_list_projects` — List a repository's projects
+- `org_delete_project` — Delete a project owned by an organization
+- `org_get_project` — Get a project owned by an organization
+- `org_edit_project` — Edit a project owned by an organization
+- `org_list_project_columns` — List columns in an organization project
+- `org_create_project_column` — Create a column in an organization project
+- `org_move_project_columns` — Reorder columns in an organization project
+- `org_delete_project_column` — Delete a column in an organization project
+- `org_get_project_column` — Get a column in an organization project
+- `org_edit_project_column` — Edit a column in an organization project
+- `org_set_default_project_column` — Set the default column for an organization project
+- `org_list_project_column_issues` — List issues in an organization project column
+- `org_remove_issue_from_project_column` — Remove an issue from an organization project column
+- `org_add_issue_to_project_column` — Add an issue to an organization project column
+- `org_move_project_issue` — Move an issue between columns in an organization project
+- `repo_list_projects` — List projects owned by a repository
 - `repo_create_project` — Create a project owned by a repository
-- `repo_delete_project` — Delete a project
-- `repo_get_project` — Get a project
-- `repo_edit_project` — Edit a project
-- `repo_list_project_columns` — List a project's columns
-- `repo_create_project_column` — Create a column in a project
-- `repo_move_project_columns` — Reorder a project's columns
-- `repo_delete_project_column` — Delete a project column
-- `repo_get_project_column` — Get a project column
-- `repo_edit_project_column` — Edit a project column
-- `repo_set_default_project_column` — Set a project's default column
-- `repo_list_project_column_issues` — List the issues in a project column
-- `repo_remove_issue_from_project_column` — Remove an issue from a project column
-- `repo_add_issue_to_project_column` — Add an issue to a project column
-- `repo_move_project_issue` — Move an issue between a project's columns
-- `user_current_list_projects` — List your projects
+- `repo_delete_project` — Delete a project owned by a repository
+- `repo_get_project` — Get a project owned by a repository
+- `repo_edit_project` — Edit a project owned by a repository
+- `repo_list_project_columns` — List columns in a repository project
+- `repo_create_project_column` — Create a column in a repository project
+- `repo_move_project_columns` — Reorder columns in a repository project
+- `repo_delete_project_column` — Delete a column in a repository project
+- `repo_get_project_column` — Get a column in a repository project
+- `repo_edit_project_column` — Edit a column in a repository project
+- `repo_set_default_project_column` — Set the default column for a repository project
+- `repo_list_project_column_issues` — List issues in a repository project column
+- `repo_remove_issue_from_project_column` — Remove an issue from a repository project column
+- `repo_add_issue_to_project_column` — Add an issue to a repository project column
+- `repo_move_project_issue` — Move an issue between columns in a repository project
+- `user_current_list_projects` — List projects owned by the authenticated user
 - `user_current_create_project` — Create a project owned by the authenticated user
-- `user_current_delete_project` — Delete a project
-- `user_current_get_project` — Get a project
-- `user_current_edit_project` — Edit a project
-- `user_current_list_project_columns` — List a project's columns
-- `user_current_create_project_column` — Create a column in a project
-- `user_current_move_project_columns` — Reorder a project's columns
-- `user_current_delete_project_column` — Delete a project column
-- `user_current_get_project_column` — Get a project column
-- `user_current_edit_project_column` — Edit a project column
-- `user_current_set_default_project_column` — Set a project's default column
-- `user_current_list_project_column_issues` — List the issues in a project column
-- `user_current_remove_issue_from_project_column` — Remove an issue from a project column
-- `user_current_add_issue_to_project_column` — Add an issue to a project column
-- `user_current_move_project_issue` — Move an issue between a project's columns
-- `user_list_projects` — List a user's projects
+- `user_current_delete_project` — Delete a project owned by the authenticated user
+- `user_current_get_project` — Get a project owned by the authenticated user
+- `user_current_edit_project` — Edit a project owned by the authenticated user
+- `user_current_list_project_columns` — List columns in the authenticated user's project
+- `user_current_create_project_column` — Create a column in the authenticated user's project
+- `user_current_move_project_columns` — Reorder columns in the authenticated user's project
+- `user_current_delete_project_column` — Delete a column in the authenticated user's project
+- `user_current_get_project_column` — Get a column in the authenticated user's project
+- `user_current_edit_project_column` — Edit a column in the authenticated user's project
+- `user_current_set_default_project_column` — Set the default column for the authenticated user's project
+- `user_current_list_project_column_issues` — List issues in the authenticated user's project column
+- `user_current_remove_issue_from_project_column` — Remove an issue from the authenticated user's project column
+- `user_current_add_issue_to_project_column` — Add an issue to the authenticated user's project column
+- `user_current_move_project_issue` — Move an issue between columns in the authenticated user's project
+- `user_list_projects` — List projects owned by a specified user
 
 ### 🔔 Notifications (7 tools)
 
-- `notify_get_list` — List notification threads
+- `notify_get_list` — List notification threads for the authenticated user
 - `notify_read_list` — Mark notification threads as read, pinned, or unread
 - `notify_new_available` — Check if unread notifications exist
 - `notify_get_thread` — Get notification thread by ID

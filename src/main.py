@@ -53,26 +53,136 @@ def get_user_token() -> Optional[str]:
 # Pydantic Contract Models
 # =============================================================================
 
-class ExternalWiki(BaseModel):
-    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
+class CreateTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
+    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. Defaults to "private".')
 
-class CreateOrgOption(BaseModel):
-    description: str = Field(default='', description='The description of the organization.')
-    email: str = Field(default='', description='The email address of the organization.')
-    full_name: str = Field(default='', description='The full display name of the organization.')
-    location: str = Field(default='', description='The location of the organization.')
-    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
-    username: str = Field(..., description='username of the organization.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public` (default), `limited` or `private`.')
-    website: str = Field(default='', description='The website URL of the organization.')
+class EditTagProtectionOption(BaseModel):
+    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
+    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
+    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
 
-class IssueMeta(BaseModel):
-    index: int = Field(default=0, description='Index.')
-    owner: str = Field(default='', description="owner of the issue's repo.")
-    repo: str = Field(default='', description='Repo.')
+class CreatePullReviewCommentReplyOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
 
-class AddCollaboratorOption(BaseModel):
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission level to grant the collaborator.')
+class GenerateRepoOption(BaseModel):
+    avatar: bool = Field(default=False, description='include avatar of the template repo.')
+    default_branch: str = Field(default='', description='Default branch of the new repository.')
+    description: str = Field(default='', description='Description of the repository to create.')
+    git_content: bool = Field(default=False, description='include git content of default branch in template repo.')
+    git_hooks: bool = Field(default=False, description='include git hooks in template repo.')
+    labels: bool = Field(default=False, description='include labels in template repo.')
+    name: str = Field(..., description='Name.')
+    owner: str = Field(..., description="the organization's name or individual user's name who will own the new repository.")
+    private: bool = Field(default=False, description='Whether the repository is private.')
+    protected_branch: bool = Field(default=False, description='include protected branches in template repo.')
+    topics: bool = Field(default=False, description='include topics in template repo.')
+    webhooks: bool = Field(default=False, description='include webhooks in template repo.')
+
+class MigrateRepoOptions(BaseModel):
+    auth_password: str = Field(default='', description='Auth password.')
+    auth_token: str = Field(default='', description='Auth token.')
+    auth_username: str = Field(default='', description='Auth username.')
+    aws_access_key_id: str = Field(default='', description='Aws access key id.')
+    aws_secret_access_key: str = Field(default='', description='Aws secret access key.')
+    clone_addr: str = Field(..., description='Clone addr.')
+    description: str = Field(default='', description='Description.')
+    issues: bool = Field(default=False, description='Issues.')
+    labels: bool = Field(default=False, description='Labels.')
+    lfs: bool = Field(default=False, description='Lfs.')
+    lfs_endpoint: str = Field(default='', description='Lfs endpoint.')
+    milestones: bool = Field(default=False, description='Milestones.')
+    mirror: bool = Field(default=False, description='Mirror.')
+    mirror_interval: str = Field(default='', description='Mirror interval.')
+    private: bool = Field(default=False, description='Private.')
+    pull_requests: bool = Field(default=False, description='Pull requests.')
+    releases: bool = Field(default=False, description='Releases.')
+    repo_name: str = Field(..., description='Repo name.')
+    repo_owner: str = Field(default='', description="the organization's name or individual user's name who will own the migrated repository.")
+    service: Optional[Literal['git', 'github', 'gitea', 'gitlab', 'gogs', 'onedev', 'gitbucket', 'codebase', 'codecommit']] = Field(default='git', description='Service.')
+    uid: int = Field(default=0, description='deprecated (only for backwards compatibility, use repo_owner instead).')
+    wiki: bool = Field(default=False, description='Wiki.')
+
+class EditProjectColumnOption(BaseModel):
+    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
+    sorting: int = Field(default=0, description='Position of the column within the project, between -128 and 127.')
+    title: str = Field(default='', description='Title.')
+
+class EditReactionOption(BaseModel):
+    content: str = Field(default='', description='The reaction content (e.g., emoji or reaction type).')
+
+class CreateDeployKeyTokenOption(BaseModel):
+    read_only: bool = Field(default=False, description='Describe if the token has only read access or read/write.')
+    title: str = Field(..., description='Title of the token to add.')
+
+class EditTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
+    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. When omitted, visibility is left unchanged.')
+
+class IssueAssigneesOption(BaseModel):
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+
+class CreateRepoOption(BaseModel):
+    auto_init: bool = Field(default=False, description='Whether the repository should be auto-initialized?.')
+    default_branch: str = Field(default='', description='DefaultBranch of the repository (used when initializes and in template).')
+    description: str = Field(default='', description='Description of the repository to create.')
+    gitignores: str = Field(default='', description='Gitignores to use.')
+    issue_labels: str = Field(default='', description='Label-Set to use.')
+    license: str = Field(default='', description='License to use.')
+    name: str = Field(..., description='Name of the repository to create.')
+    object_format_name: Optional[Literal['sha1', 'sha256']] = Field(default='sha1', description='ObjectFormatName of the underlying git repository, empty string for default (sha1).')
+    private: bool = Field(default=False, description='Whether the repository is private.')
+    readme: str = Field(default='', description='Readme of the repository to create.')
+    template: bool = Field(default=False, description='Whether the repository is template.')
+    trust_model: Optional[Literal['default', 'collaborator', 'committer', 'collaboratorcommitter']] = Field(default='default', description='TrustModel of the repository.')
+
+class EditBranchProtectionOption(BaseModel):
+    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
+    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
+    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
+    block_on_codeowner_reviews: bool = Field(default=False, description='Block on codeowner reviews.')
+    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
+    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
+    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
+    bypass_allowlist_teams: Optional[list[str]] = Field(default=None, description='Bypass allowlist teams.')
+    bypass_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Bypass allowlist usernames.')
+    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
+    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
+    enable_bypass_allowlist: bool = Field(default=False, description='Enable bypass allowlist.')
+    enable_force_push: bool = Field(default=False, description='Enable force push.')
+    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
+    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
+    enable_push: bool = Field(default=False, description='Enable push.')
+    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
+    enable_status_check: bool = Field(default=False, description='Enable status check.')
+    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
+    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
+    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
+    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
+    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
+    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
+    priority: int = Field(default=0, description='Priority.')
+    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
+    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
+    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
+    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
+    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
+    required_approvals: int = Field(default=0, description='Required approvals.')
+    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
+    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
+
+class IssueLabelsOption(BaseModel):
+    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
 
 class CreateBranchProtectionOption(BaseModel):
     approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
@@ -111,6 +221,21 @@ class CreateBranchProtectionOption(BaseModel):
     status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
     unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
 
+class ExternalWiki(BaseModel):
+    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
+
+class CreateLabelOption(BaseModel):
+    color: str = Field(..., description='Color.')
+    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
+    exclusive: bool = Field(default=False, description='Exclusive.')
+    is_archived: bool = Field(default=False, description='Is archived.')
+    name: str = Field(..., description='Name is the display name for the new label.')
+
+class CreateWikiPageOptions(BaseModel):
+    content_base64: str = Field(default='', description='content must be base64 encoded.')
+    message: str = Field(default='', description='optional commit message summarizing the change.')
+    title: str = Field(default='', description='page title. leave empty to keep unchanged.')
+
 class CreateIssueOption(BaseModel):
     assignee: str = Field(default='', description='deprecated.')
     assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
@@ -123,18 +248,101 @@ class CreateIssueOption(BaseModel):
     ref: str = Field(default='', description='Ref.')
     title: str = Field(..., description='Title.')
 
-class RenameOrgOption(BaseModel):
-    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
+class EditProjectOption(BaseModel):
+    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
+    description: str = Field(default='', description='Description.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
+    title: str = Field(default='', description='Title.')
 
-class CreateTagOption(BaseModel):
-    message: str = Field(default='', description='The message to associate with the tag.')
-    tag_name: str = Field(..., description='The name of the tag to create.')
-    target: str = Field(default='', description='The target commit SHA or branch name for the tag.')
+class MoveProjectColumnsOption(BaseModel):
+    column_ids: list[int] = Field(..., description='Every column ID of the project, in the desired left-to-right order.')
 
-class CreateWikiPageOptions(BaseModel):
-    content_base64: str = Field(default='', description='content must be base64 encoded.')
-    message: str = Field(default='', description='optional commit message summarizing the change.')
-    title: str = Field(default='', description='page title. leave empty to keep unchanged.')
+class UpdateBranchProtectionPriories(BaseModel):
+    ids: Optional[list[int]] = Field(default=None, description='Ids.')
+
+class CreateBranchRepoOption(BaseModel):
+    new_branch_name: str = Field(..., description='Name of the branch to create.')
+    old_branch_name: str = Field(default='', description='Name of the old branch to create from.')
+    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
+
+class CreatePullReviewComment(BaseModel):
+    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
+    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
+    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
+    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
+
+class CreateProjectColumnOption(BaseModel):
+    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
+    title: str = Field(..., description='Title.')
+
+class CreateOrgOption(BaseModel):
+    description: str = Field(default='', description='The description of the organization.')
+    email: str = Field(default='', description='The email address of the organization.')
+    full_name: str = Field(default='', description='The full display name of the organization.')
+    location: str = Field(default='', description='The location of the organization.')
+    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
+    username: str = Field(..., description='username of the organization.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public` (default), `limited` or `private`.')
+    website: str = Field(default='', description='The website URL of the organization.')
+
+class InternalTracker(BaseModel):
+    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
+    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
+    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
+
+class PullReviewRequestOptions(BaseModel):
+    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
+    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
+
+class RepoTopicOptions(BaseModel):
+    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
+
+class MergeUpstreamRequest(BaseModel):
+    branch: str = Field(default='', description='Branch.')
+    ff_only: bool = Field(default=False, description='Ff only.')
+
+class AddCollaboratorOption(BaseModel):
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission level to grant the collaborator.')
+
+class MoveProjectIssueOption(BaseModel):
+    column_id: int = Field(..., description='Target column to move the issue into.')
+    sorting: int = Field(default=0, description='Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first.')
+
+class CreateStatusOption(BaseModel):
+    context: str = Field(default='', description='Context is the unique context identifier for the status.')
+    description: str = Field(default='', description='Description provides a brief description of the status.')
+    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure).')
+    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
+
+class CreateTagProtectionOption(BaseModel):
+    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
+    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
+    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
+
+class Identity(BaseModel):
+    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
+    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
+
+class CommitDateOptions(BaseModel):
+    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+
+class AddTimeOption(BaseModel):
+    created: str = Field(default='', description='Created.')
+    time: int = Field(..., description='time in seconds.')
+    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
+
+class CreateKeyOption(BaseModel):
+    key: str = Field(..., description='An armored SSH key to add.')
+    read_only: bool = Field(default=False, description='Describe if the key has only read access or read/write.')
+    title: str = Field(..., description='Title of the key to add.')
+
+class ChangeFileOperation(BaseModel):
+    content: str = Field(default='', description='Plain-text file content.')
+    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
+    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
+    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
+    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
 
 class CreatePullRequestOption(BaseModel):
     allow_maintainer_edit: bool = Field(default=False, description='Whether maintainers can edit the pull request.')
@@ -150,21 +358,31 @@ class CreatePullRequestOption(BaseModel):
     team_reviewers: Optional[list[str]] = Field(default=None, description='The list of team reviewer names.')
     title: str = Field(default='', description='The title of the pull request.')
 
-class InternalTracker(BaseModel):
-    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
-    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
-    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
+class EditMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides updated details about the milestone.')
+    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the updated state of the milestone.')
+    title: str = Field(default='', description='Title is the updated title of the milestone.')
 
-class EditProjectColumnOption(BaseModel):
-    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
-    sorting: int = Field(default=0, description='Position of the column within the project, between -128 and 127.')
-    title: str = Field(default='', description='Title.')
+class UpdateBranchRepoOption(BaseModel):
+    force: bool = Field(default=False, description='Force update even if the change is not a fast-forward.')
+    new_commit_id: str = Field(..., description='New commit SHA (or any ref) the branch should point to.')
+    old_commit_id: str = Field(default='', description='Expected old commit SHA of the branch; if provided it must match the current tip.')
 
-class CreatePullReviewComment(BaseModel):
-    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
-    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
-    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
-    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
+class EditOrgOption(BaseModel):
+    description: str = Field(default='', description='The description of the organization.')
+    email: str = Field(default='', description='The email address of the organization; use empty string to clear.')
+    full_name: str = Field(default='', description='The full display name of the organization.')
+    location: str = Field(default='', description='The location of the organization.')
+    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
+    website: str = Field(default='', description='The website URL of the organization.')
+
+class RenameOrgOption(BaseModel):
+    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
+
+class EditDeadlineOption(BaseModel):
+    due_date: str = Field(..., description='Due date.')
 
 class CreateReleaseOption(BaseModel):
     body: str = Field(default='', description='The release notes or description.')
@@ -175,11 +393,31 @@ class CreateReleaseOption(BaseModel):
     tag_name: str = Field(..., description='Tag name.')
     target_commitish: str = Field(default='', description='The target commitish for the release.')
 
-class CreateProjectOption(BaseModel):
-    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
-    description: str = Field(default='', description='Description.')
-    template_type: str = Field(default='', description='Template type: "none", "basic_kanban" or "bug_triage".')
-    title: str = Field(..., description='Title.')
+class EditIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body is the updated comment text content.')
+
+class EditReleaseOption(BaseModel):
+    body: str = Field(default='', description='The new release notes or description.')
+    draft: bool = Field(default=False, description='Whether to change the draft status.')
+    name: str = Field(default='', description='The new display title of the release.')
+    prerelease: bool = Field(default=False, description='Whether to change the prerelease status.')
+    tag_name: str = Field(default='', description='The new name of the git tag.')
+    target_commitish: str = Field(default='', description='The new target commitish for the release.')
+
+class LockIssueOption(BaseModel):
+    lock_reason: str = Field(default='', description='Lock reason.')
+
+class CreateForkOption(BaseModel):
+    name: str = Field(default='', description='name of the forked repository.')
+    organization: str = Field(default='', description='organization name, if forking into an organization.')
+
+class SubmitPullReviewOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
+    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
+
+class DismissPullReviewOptions(BaseModel):
+    message: str = Field(default='', description='Message.')
+    priors: bool = Field(default=False, description='Priors.')
 
 class EditIssueOption(BaseModel):
     assignee: str = Field(default='', description='deprecated.')
@@ -194,211 +432,26 @@ class EditIssueOption(BaseModel):
     title: str = Field(default='', description='Title.')
     unset_due_date: bool = Field(default=False, description='Unset due date.')
 
-class CreateIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body is the comment text content.')
-
-class ChangeFileOperation(BaseModel):
-    content: str = Field(default='', description='Plain-text file content.')
-    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
-    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
-    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
-    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
-
-class CommitDateOptions(BaseModel):
-    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-
-class CreatePullReviewCommentReplyOptions(BaseModel):
-    body: str = Field(default='', description='Body.')
-
-class CreateStatusOption(BaseModel):
-    context: str = Field(default='', description='Context is the unique context identifier for the status.')
-    description: str = Field(default='', description='Description provides a brief description of the status.')
-    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure).')
-    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
-
-class CreateTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
-    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. Defaults to "private".')
-
-class MoveProjectIssueOption(BaseModel):
-    column_id: int = Field(..., description='Target column to move the issue into.')
-    sorting: int = Field(default=0, description='Position within the column, ascending. Omit to append. Negative values sort above the rest, equal values are ordered newest first.')
-
-class CreateForkOption(BaseModel):
-    name: str = Field(default='', description='name of the forked repository.')
-    organization: str = Field(default='', description='organization name, if forking into an organization.')
-
-class Identity(BaseModel):
-    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
-    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
-
-class PullReviewRequestOptions(BaseModel):
-    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
-    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
-
-class EditMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides updated details about the milestone.')
-    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
-    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the updated state of the milestone.')
-    title: str = Field(default='', description='Title is the updated title of the milestone.')
-
 class ExternalTracker(BaseModel):
     external_tracker_format: str = Field(default='', description='External issue tracker URL format using {user}, {repo}, and {index} placeholders (e.g. https://tracker.example.com/{repo}/{index}).')
     external_tracker_regexp_pattern: str = Field(default='', description='Regular expression matching external issue numbers (e.g. \\\\d+).')
     external_tracker_style: str = Field(default='', description='External issue number format: numeric, alphanumeric, or regexp.')
     external_tracker_url: str = Field(default='', description='External issue tracker URL (e.g. https://tracker.example.com).')
 
-class UpdateBranchRepoOption(BaseModel):
-    force: bool = Field(default=False, description='Force update even if the change is not a fast-forward.')
-    new_commit_id: str = Field(..., description='New commit SHA (or any ref) the branch should point to.')
-    old_commit_id: str = Field(default='', description='Expected old commit SHA of the branch; if provided it must match the current tip.')
-
-class EditBranchProtectionOption(BaseModel):
-    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
-    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
-    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
-    block_on_codeowner_reviews: bool = Field(default=False, description='Block on codeowner reviews.')
-    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
-    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
-    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
-    bypass_allowlist_teams: Optional[list[str]] = Field(default=None, description='Bypass allowlist teams.')
-    bypass_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Bypass allowlist usernames.')
-    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
-    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
-    enable_bypass_allowlist: bool = Field(default=False, description='Enable bypass allowlist.')
-    enable_force_push: bool = Field(default=False, description='Enable force push.')
-    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
-    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
-    enable_push: bool = Field(default=False, description='Enable push.')
-    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
-    enable_status_check: bool = Field(default=False, description='Enable status check.')
-    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
-    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
-    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
-    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
-    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
-    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
-    priority: int = Field(default=0, description='Priority.')
-    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
-    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
-    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
-    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
-    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
-    required_approvals: int = Field(default=0, description='Required approvals.')
-    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
-    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
-
-class CreateRepoOption(BaseModel):
-    auto_init: bool = Field(default=False, description='Whether the repository should be auto-initialized?.')
-    default_branch: str = Field(default='', description='DefaultBranch of the repository (used when initializes and in template).')
-    description: str = Field(default='', description='Description of the repository to create.')
-    gitignores: str = Field(default='', description='Gitignores to use.')
-    issue_labels: str = Field(default='', description='Label-Set to use.')
-    license: str = Field(default='', description='License to use.')
-    name: str = Field(..., description='Name of the repository to create.')
-    object_format_name: Optional[Literal['sha1', 'sha256']] = Field(default='sha1', description='ObjectFormatName of the underlying git repository, empty string for default (sha1).')
-    private: bool = Field(default=False, description='Whether the repository is private.')
-    readme: str = Field(default='', description='Readme of the repository to create.')
-    template: bool = Field(default=False, description='Whether the repository is template.')
-    trust_model: Optional[Literal['default', 'collaborator', 'committer', 'collaboratorcommitter']] = Field(default='default', description='TrustModel of the repository.')
-
-class EditDeadlineOption(BaseModel):
-    due_date: str = Field(..., description='Due date.')
-
-class CreateBranchRepoOption(BaseModel):
-    new_branch_name: str = Field(..., description='Name of the branch to create.')
-    old_branch_name: str = Field(default='', description='Name of the old branch to create from.')
-    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
-
-class EditIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body is the updated comment text content.')
-
-class LockIssueOption(BaseModel):
-    lock_reason: str = Field(default='', description='Lock reason.')
-
-class CreateDeployKeyTokenOption(BaseModel):
-    read_only: bool = Field(default=False, description='Describe if the token has only read access or read/write.')
-    title: str = Field(..., description='Title of the token to add.')
-
-class CreateLabelOption(BaseModel):
-    color: str = Field(..., description='Color.')
-    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
-    exclusive: bool = Field(default=False, description='Exclusive.')
-    is_archived: bool = Field(default=False, description='Is archived.')
-    name: str = Field(..., description='Name is the display name for the new label.')
-
-class MergeUpstreamRequest(BaseModel):
-    branch: str = Field(default='', description='Branch.')
-    ff_only: bool = Field(default=False, description='Ff only.')
-
-class DismissPullReviewOptions(BaseModel):
-    message: str = Field(default='', description='Message.')
-    priors: bool = Field(default=False, description='Priors.')
-
 class RenameBranchRepoOption(BaseModel):
     name: str = Field(..., description='New branch name.')
 
-class CreateTagProtectionOption(BaseModel):
-    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
-    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
-    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
+class CreateTagOption(BaseModel):
+    message: str = Field(default='', description='The message to associate with the tag.')
+    tag_name: str = Field(..., description='The name of the tag to create.')
+    target: str = Field(default='', description='The target commit SHA or branch name for the tag.')
 
-class CreatePullReviewOptions(BaseModel):
-    body: str = Field(default='', description='Body.')
-    comments: Optional[list[CreatePullReviewComment]] = Field(default=None, description='Comments.')
-    commit_id: str = Field(default='', description='Commit id.')
-    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
-
-class ApplyDiffPatchFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='Content.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
-    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class EditOrgOption(BaseModel):
-    description: str = Field(default='', description='The description of the organization.')
-    email: str = Field(default='', description='The email address of the organization; use empty string to clear.')
-    full_name: str = Field(default='', description='The full display name of the organization.')
-    location: str = Field(default='', description='The location of the organization.')
-    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
-    website: str = Field(default='', description='The website URL of the organization.')
-
-class CreateProjectColumnOption(BaseModel):
-    color: str = Field(default='', description='Column color in 6-digit hex format, e.g. #FF0000.')
-    title: str = Field(..., description='Title.')
-
-class RepoTopicOptions(BaseModel):
-    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
-
-class UpdateBranchProtectionPriories(BaseModel):
-    ids: Optional[list[int]] = Field(default=None, description='Ids.')
-
-class CreateMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides details about the milestone.')
-    due_on: str = Field(default='', description='Deadline is the due date for the milestone.')
-    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the initial state of the milestone.')
-    title: str = Field(default='', description='Title is the title of the new milestone.')
-
-class EditProjectOption(BaseModel):
-    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
-    description: str = Field(default='', description='Description.')
-    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
-    title: str = Field(default='', description='Title.')
-
-class IssueAssigneesOption(BaseModel):
-    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+class EditLabelOption(BaseModel):
+    color: str = Field(default='', description='Color.')
+    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
+    exclusive: bool = Field(default=False, description='Exclusive.')
+    is_archived: bool = Field(default=False, description='Is archived.')
+    name: str = Field(default='', description='Name is the new display name for the label.')
 
 class DeleteFileOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
@@ -411,95 +464,38 @@ class DeleteFileOptions(BaseModel):
     sha: str = Field(..., description='the blob ID (SHA) for the file to delete.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
-class SubmitPullReviewOptions(BaseModel):
-    body: str = Field(default='', description='Body.')
-    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
+class CreateMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides details about the milestone.')
+    due_on: str = Field(default='', description='Deadline is the due date for the milestone.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State indicates the initial state of the milestone.')
+    title: str = Field(default='', description='Title is the title of the new milestone.')
 
-class AddTimeOption(BaseModel):
-    created: str = Field(default='', description='Created.')
-    time: int = Field(..., description='time in seconds.')
-    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
+class UpdateFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='content must be base64 encoded.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    sha: str = Field(default='', description='the blob ID (SHA) for the file that already exists to update, or leave it empty to create a new file.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
-class EditReactionOption(BaseModel):
-    content: str = Field(default='', description='The reaction content (e.g., emoji or reaction type).')
+class IssueMeta(BaseModel):
+    index: int = Field(default=0, description='Index.')
+    owner: str = Field(default='', description="owner of the issue's repo.")
+    repo: str = Field(default='', description='Repo.')
 
-class GenerateRepoOption(BaseModel):
-    avatar: bool = Field(default=False, description='include avatar of the template repo.')
-    default_branch: str = Field(default='', description='Default branch of the new repository.')
-    description: str = Field(default='', description='Description of the repository to create.')
-    git_content: bool = Field(default=False, description='include git content of default branch in template repo.')
-    git_hooks: bool = Field(default=False, description='include git hooks in template repo.')
-    labels: bool = Field(default=False, description='include labels in template repo.')
-    name: str = Field(..., description='Name.')
-    owner: str = Field(..., description="the organization's name or individual user's name who will own the new repository.")
-    private: bool = Field(default=False, description='Whether the repository is private.')
-    protected_branch: bool = Field(default=False, description='include protected branches in template repo.')
-    topics: bool = Field(default=False, description='include topics in template repo.')
-    webhooks: bool = Field(default=False, description='include webhooks in template repo.')
+class CreateIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body is the comment text content.')
 
-class CreateKeyOption(BaseModel):
-    key: str = Field(..., description='An armored SSH key to add.')
-    read_only: bool = Field(default=False, description='Describe if the key has only read access or read/write.')
-    title: str = Field(..., description='Title of the key to add.')
-
-class EditLabelOption(BaseModel):
-    color: str = Field(default='', description='Color.')
-    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
-    exclusive: bool = Field(default=False, description='Exclusive.')
-    is_archived: bool = Field(default=False, description='Is archived.')
-    name: str = Field(default='', description='Name is the new display name for the label.')
-
-class IssueLabelsOption(BaseModel):
-    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
-
-class EditReleaseOption(BaseModel):
-    body: str = Field(default='', description='The new release notes or description.')
-    draft: bool = Field(default=False, description='Whether to change the draft status.')
-    name: str = Field(default='', description='The new display title of the release.')
-    prerelease: bool = Field(default=False, description='Whether to change the prerelease status.')
-    tag_name: str = Field(default='', description='The new name of the git tag.')
-    target_commitish: str = Field(default='', description='The new target commitish for the release.')
-
-class EditTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='All units have this permission (read/write/admin).')
-    units: Optional[list[str]] = Field(default=None, description='Deprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='Team visibility within the organization. When omitted, visibility is left unchanged.')
-
-class MoveProjectColumnsOption(BaseModel):
-    column_ids: list[int] = Field(..., description='Every column ID of the project, in the desired left-to-right order.')
-
-class MigrateRepoOptions(BaseModel):
-    auth_password: str = Field(default='', description='Auth password.')
-    auth_token: str = Field(default='', description='Auth token.')
-    auth_username: str = Field(default='', description='Auth username.')
-    aws_access_key_id: str = Field(default='', description='Aws access key id.')
-    aws_secret_access_key: str = Field(default='', description='Aws secret access key.')
-    clone_addr: str = Field(..., description='Clone addr.')
+class CreateProjectOption(BaseModel):
+    card_type: str = Field(default='', description='Card type: "text_only" or "images_and_text".')
     description: str = Field(default='', description='Description.')
-    issues: bool = Field(default=False, description='Issues.')
-    labels: bool = Field(default=False, description='Labels.')
-    lfs: bool = Field(default=False, description='Lfs.')
-    lfs_endpoint: str = Field(default='', description='Lfs endpoint.')
-    milestones: bool = Field(default=False, description='Milestones.')
-    mirror: bool = Field(default=False, description='Mirror.')
-    mirror_interval: str = Field(default='', description='Mirror interval.')
-    private: bool = Field(default=False, description='Private.')
-    pull_requests: bool = Field(default=False, description='Pull requests.')
-    releases: bool = Field(default=False, description='Releases.')
-    repo_name: str = Field(..., description='Repo name.')
-    repo_owner: str = Field(default='', description="the organization's name or individual user's name who will own the migrated repository.")
-    service: Optional[Literal['git', 'github', 'gitea', 'gitlab', 'gogs', 'onedev', 'gitbucket', 'codebase', 'codecommit']] = Field(default='git', description='Service.')
-    uid: int = Field(default=0, description='deprecated (only for backwards compatibility, use repo_owner instead).')
-    wiki: bool = Field(default=False, description='Wiki.')
-
-class EditTagProtectionOption(BaseModel):
-    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
-    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
-    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
+    template_type: str = Field(default='', description='Template type: "none", "basic_kanban" or "bug_triage".')
+    title: str = Field(..., description='Title.')
 
 class EditPullRequestOption(BaseModel):
     allow_maintainer_edit: bool = Field(default=False, description='Whether to allow maintainer edits.')
@@ -524,28 +520,6 @@ class MergePullRequestOption(BaseModel):
     merge_message_field: str = Field(default='', description='Merge message field.')
     merge_title_field: str = Field(default='', description='Merge title field.')
     merge_when_checks_succeed: bool = Field(default=False, description='Merge when checks succeed.')
-
-class ChangeFilesOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
-    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
-    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class CreateFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='content must be base64 encoded.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
-    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
 class EditRepoOption(BaseModel):
     allow_fast_forward_only_merge: bool = Field(default=False, description='either `true` to allow fast-forward-only merging pull requests, or `false` to prevent fast-forward-only merging.')
@@ -587,17 +561,43 @@ class EditRepoOption(BaseModel):
     template: bool = Field(default=False, description='either `true` to make this repository a template or `false` to make it a normal repository.')
     website: str = Field(default='', description='a URL with more information about the repository.')
 
-class UpdateFileOptions(BaseModel):
+class CreatePullReviewOptions(BaseModel):
+    body: str = Field(default='', description='Body.')
+    comments: Optional[list[CreatePullReviewComment]] = Field(default=None, description='Comments.')
+    commit_id: str = Field(default='', description='Commit id.')
+    event: Optional[Literal['APPROVED', 'PENDING', 'COMMENT', 'REQUEST_CHANGES', 'REQUEST_REVIEW']] = Field(default='APPROVED', description='Event.')
+
+class ApplyDiffPatchFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='Content.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class CreateFileOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
     branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
     committer: Optional[Identity] = Field(default=None, description='Committer.')
     content: str = Field(..., description='content must be base64 encoded.')
     dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
     force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
-    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
     message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
     new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
-    sha: str = Field(default='', description='the blob ID (SHA) for the file that already exists to update, or leave it empty to create a new file.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class ChangeFilesOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) is the base branch for the changes. If not supplied, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
+    force_push: bool = Field(default=False, description='force_push (optional) will do a force-push if the new branch already exists.')
+    message: str = Field(default='', description='message (optional) is the commit message of the changes. If not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from base branch for the changes. If not supplied, the changes will be committed to the base branch.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
 
@@ -609,7 +609,7 @@ class UpdateFileOptions(BaseModel):
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Notify Get List", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def notify_get_list(all: bool = False, status_types: list[str] | None = None, subject_type: list[Literal['issue', 'pull', 'commit', 'repository']] | None = None, since: str = "", before: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List users's notification threads.
+    """List notification threads for the authenticated user.
 
     Args:
         all: Whether to include all items: true or false.
@@ -639,7 +639,7 @@ async def notify_get_list(all: bool = False, status_types: list[str] | None = No
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Notify Read List", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def notify_read_list(last_read_at: str = "", all: str = "", status_types: list[str] | None = None, to_status: str = "", sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Mark notification threads as read, pinned or unread.
+    """Mark notification threads for the authenticated user as read, pinned, or unread.
 
     Args:
         last_read_at: ISO 8601 format (2026-06-22T15:00:00-04:00).
@@ -717,7 +717,7 @@ async def notify_read_thread(id: str, to_status: str = 'read', sudo: str = "", c
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Create Org Repo Deprecated", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def create_org_repo_deprecated(org: str, description: str, name: str, auto_init: bool = False, default_branch: str = '', gitignores: str = '', issue_labels: str = '', license: str = '', object_format_name: Literal['sha1', 'sha256'] = 'sha1', private: bool = False, readme: str = '', template: bool = False, trust_model: Literal['default', 'collaborator', 'committer', 'collaboratorcommitter'] = 'default', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a repository in an organization.
+    """Create a repository in an organization using the deprecated /org route.
 
     Args:
         org: Organization name (e.g. acme).
@@ -906,7 +906,7 @@ async def org_list_activity_feeds(org: str, date: str = "", page: int = 1, limit
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Labels", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_labels(org: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List an organization's labels.
+    """List organization labels.
 
     Args:
         org: Organization name (e.g. acme).
@@ -928,7 +928,7 @@ async def org_list_labels(org: str, page: int = 1, limit: int = 50, include_all_
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Create Label", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_create_label(org: str, color: str, description: str, name: str, exclusive: bool = False, is_archived: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a label for an organization.
+    """Create an organization label.
 
     Args:
         org: Organization name (e.g. acme).
@@ -957,7 +957,7 @@ async def org_create_label(org: str, color: str, description: str, name: str, ex
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Delete Label", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_delete_label(org: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a label.
+    """Delete an organization label.
 
     Args:
         org: Organization name (e.g. acme).
@@ -976,7 +976,7 @@ async def org_delete_label(org: str, id: int, sudo: str = "", ctx: Context = Non
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Get Label", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_get_label(org: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a single label.
+    """Get an organization label.
 
     Args:
         org: Organization name (e.g. acme).
@@ -997,7 +997,7 @@ async def org_get_label(org: str, id: int, include_all_fields: bool = False, sud
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Edit Label", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_edit_label(org: str, id: int, color: str = '', description: str = '', exclusive: bool = False, is_archived: bool = False, name: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Update a label.
+    """Update an organization label.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1088,7 +1088,7 @@ async def org_is_member(org: str, username: str, sudo: str = "", ctx: Context = 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_projects(org: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List an organization's projects.
+    """List projects owned by an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1139,7 +1139,7 @@ async def org_create_project(org: str, description: str, title: str, card_type: 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_delete_project(org: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project.
+    """Delete a project owned by an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1158,7 +1158,7 @@ async def org_delete_project(org: str, id: int, sudo: str = "", ctx: Context = N
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_get_project(org: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project.
+    """Get a project owned by an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1179,7 +1179,7 @@ async def org_get_project(org: str, id: int, include_all_fields: bool = False, s
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_edit_project(org: str, id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project.
+    """Edit a project owned by an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1208,7 +1208,7 @@ async def org_edit_project(org: str, id: int, card_type: str = '', description: 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_project_columns(org: str, id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a project's columns.
+    """List columns in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1232,7 +1232,7 @@ async def org_list_project_columns(org: str, id: int, page: int = 1, limit: int 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_create_project_column(org: str, id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a column in a project.
+    """Create a column in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1257,7 +1257,7 @@ async def org_create_project_column(org: str, id: int, title: str, color: str = 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_move_project_columns(org: str, id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Reorder a project's columns.
+    """Reorder columns in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1278,7 +1278,7 @@ async def org_move_project_columns(org: str, id: int, column_ids: list[int], sud
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_delete_project_column(org: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project column.
+    """Delete a column in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1299,7 +1299,7 @@ async def org_delete_project_column(org: str, id: int, column_id: int, sudo: str
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_get_project_column(org: str, id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project column.
+    """Get a column in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1322,7 +1322,7 @@ async def org_get_project_column(org: str, id: int, column_id: int, include_all_
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_edit_project_column(org: str, id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project column.
+    """Edit a column in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1351,7 +1351,7 @@ async def org_edit_project_column(org: str, id: int, column_id: int, color: str 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_set_default_project_column(org: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Set a project's default column.
+    """Set the default column for an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1372,7 +1372,7 @@ async def org_set_default_project_column(org: str, id: int, column_id: int, sudo
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_project_column_issues(org: str, id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the issues in a project column.
+    """List issues in an organization project column.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1398,7 +1398,7 @@ async def org_list_project_column_issues(org: str, id: int, column_id: int, page
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_remove_issue_from_project_column(org: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Remove an issue from a project column.
+    """Remove an issue from an organization project column.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1421,7 +1421,7 @@ async def org_remove_issue_from_project_column(org: str, id: int, column_id: int
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_add_issue_to_project_column(org: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add an issue to a project column.
+    """Add an issue to an organization project column.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1444,7 +1444,7 @@ async def org_add_issue_to_project_column(org: str, id: int, column_id: int, iss
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_move_project_issue(org: str, id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Move an issue between a project's columns.
+    """Move an issue between columns in an organization project.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1584,7 +1584,7 @@ async def org_delete_repos(org: str, sudo: str = "", ctx: Context = None) -> dic
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_repos(org: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List an organization's repos.
+    """List repositories in an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1649,7 +1649,7 @@ async def create_org_repo(org: str, description: str, name: str, auto_init: bool
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Teams", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_teams(org: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List an organization's teams.
+    """List teams in an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1671,7 +1671,7 @@ async def org_list_teams(org: str, page: int = 1, limit: int = 50, include_all_f
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Create Team", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def org_create_team(org: str, description: str, name: str, permission: Literal['read', 'write', 'admin'], can_create_org_repo: bool = False, includes_all_repositories: bool = False, units: list[str] | None = None, visibility: Literal['public', 'limited', 'private'] = 'public', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a team.
+    """Create a team in an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -1704,7 +1704,7 @@ async def org_create_team(org: str, description: str, name: str, permission: Lit
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Team Search", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def team_search(org: str, q: str = "", include_desc: bool = False, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Search for teams within an organization.
+    """Search for teams in an organization.
 
     Args:
         org: Organization name (e.g. acme).
@@ -2267,7 +2267,7 @@ async def repo_list_activity_feeds(owner: str, repo: str, date: str = "", page: 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Get Assignees", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_get_assignees(owner: str, repo: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Return all users that have write access and can be assigned to issues.
+    """List users who can be assigned to issues in a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -2287,7 +2287,7 @@ async def repo_get_assignees(owner: str, repo: str, include_all_fields: bool = F
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Check Assignee", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_check_assignee(owner: str, repo: str, assignee: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Check if a user can be assigned to issues in a repository.
+    """Check whether a user can be assigned to issues in a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3338,7 +3338,7 @@ async def repo_get_single_commit(owner: str, repo: str, sha: str, include_stats:
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List All Git Refs", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_all_git_refs(owner: str, repo: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get specified ref or filtered repository's refs.
+    """List all git references in a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3358,7 +3358,7 @@ async def repo_list_all_git_refs(owner: str, repo: str, include_all_fields: bool
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Git Refs", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_git_refs(owner: str, repo: str, ref: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get specified ref or filtered repository's refs.
+    """List git references in a repository filtered by a specific reference.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3537,7 +3537,7 @@ async def issue_create_issue(owner: str, repo: str, body: str, title: str, assig
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Get Repo Comments", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_repo_comments(owner: str, repo: str, since: str = "", before: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List all comments in a repository.
+    """List issue comments across a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3565,7 +3565,7 @@ async def issue_get_repo_comments(owner: str, repo: str, since: str = "", before
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Delete Comment", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def issue_delete_comment(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a comment.
+    """Delete a repository issue comment by comment ID.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3586,7 +3586,7 @@ async def issue_delete_comment(owner: str, repo: str, id: int, sudo: str = "", c
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Get Comment", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_comment(owner: str, repo: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a comment.
+    """Get an issue comment by comment ID.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3609,7 +3609,7 @@ async def issue_get_comment(owner: str, repo: str, id: int, include_all_fields: 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Edit Comment", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_edit_comment(owner: str, repo: str, id: int, body: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a comment.
+    """Edit a repository issue comment by comment ID.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3861,7 +3861,7 @@ async def issue_add_assignees(owner: str, repo: str, index: int, assignees: list
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Check Assignee", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_check_assignee(owner: str, repo: str, index: int, assignee: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Check if a user can be assigned to an issue.
+    """Check whether a user is assigned to an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3966,7 +3966,7 @@ async def issue_create_issue_blocking(owner: str, repo: str, index: str, body_in
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Issue Get Comments", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_comments(owner: str, repo: str, index: int, since: str = "", before: str = "", include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List all comments on an issue.
+    """List comments on an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -3992,7 +3992,7 @@ async def issue_get_comments(owner: str, repo: str, index: int, since: str = "",
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Issue Create Comment", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def issue_create_comment(owner: str, repo: str, index: int, body: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add a comment to an issue.
+    """Create a comment on an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4017,7 +4017,7 @@ async def issue_create_comment(owner: str, repo: str, index: int, body: str, inc
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Delete Comment Deprecated", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def issue_delete_comment_deprecated(owner: str, repo: str, index: int, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a comment.
+    """Delete an issue comment by issue number and comment ID using the deprecated route.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4040,7 +4040,7 @@ async def issue_delete_comment_deprecated(owner: str, repo: str, index: int, id:
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Edit Comment Deprecated", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_edit_comment_deprecated(owner: str, repo: str, index: int, id: int, body: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a comment.
+    """Edit an issue comment by issue number and comment ID using the deprecated route.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4195,7 +4195,7 @@ async def issue_clear_labels(owner: str, repo: str, index: int, sudo: str = "", 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Get Labels", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_labels(owner: str, repo: str, index: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get an issue's labels.
+    """List labels on an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4217,7 +4217,7 @@ async def issue_get_labels(owner: str, repo: str, index: int, include_all_fields
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Add Label", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def issue_add_label(owner: str, repo: str, index: int, labels: list[int] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add a label to an issue.
+    """Add labels to an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4241,7 +4241,7 @@ async def issue_add_label(owner: str, repo: str, index: int, labels: list[int] |
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Replace Labels", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_replace_labels(owner: str, repo: str, index: int, labels: list[int] | None = None, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Replace an issue's labels.
+    """Replace labels on an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4629,7 +4629,7 @@ async def issue_add_subscription(owner: str, repo: str, index: int, user: str, s
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Get Comments And Timeline", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_comments_and_timeline(owner: str, repo: str, index: int, since: str = "", page: int = 1, limit: int = 50, before: str = "", include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List all comments and events on an issue.
+    """List comments and timeline events for an issue.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4888,7 +4888,7 @@ async def repo_get_key(owner: str, repo: str, id: int, include_all_fields: bool 
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Issue List Labels", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_list_labels(owner: str, repo: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get all of a repository's labels.
+    """List repository labels.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4912,7 +4912,7 @@ async def issue_list_labels(owner: str, repo: str, page: int = 1, limit: int = 5
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Create Label", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def issue_create_label(owner: str, repo: str, color: str, description: str, name: str, exclusive: bool = False, is_archived: bool = False, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a label.
+    """Create a repository label.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4943,7 +4943,7 @@ async def issue_create_label(owner: str, repo: str, color: str, description: str
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Delete Label", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def issue_delete_label(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a label.
+    """Delete a repository label.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4964,7 +4964,7 @@ async def issue_delete_label(owner: str, repo: str, id: int, sudo: str = "", ctx
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Get Label", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_get_label(owner: str, repo: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a single label.
+    """Get a repository label.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -4987,7 +4987,7 @@ async def issue_get_label(owner: str, repo: str, id: int, include_all_fields: bo
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Issue Edit Label", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def issue_edit_label(owner: str, repo: str, id: int, color: str = '', description: str = '', exclusive: bool = False, is_archived: bool = False, name: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Update a label.
+    """Update a repository label.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5218,7 +5218,7 @@ async def issue_edit_milestone(owner: str, repo: str, id: str, description: str 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Notify Get Repo List", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def notify_get_repo_list(owner: str, repo: str, all: bool = False, status_types: list[str] | None = None, subject_type: list[Literal['issue', 'pull', 'commit', 'repository']] | None = None, since: str = "", before: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List users's notification threads on a specific repo.
+    """List notification threads for a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5252,7 +5252,7 @@ async def notify_get_repo_list(owner: str, repo: str, all: bool = False, status_
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Notify Read Repo List", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def notify_read_repo_list(owner: str, repo: str, all: str = "", status_types: list[str] | None = None, to_status: str = "", last_read_at: str = "", sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Mark notification threads as read, pinned or unread on a specific repo.
+    """Mark repository notification threads as read, pinned, or unread.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5279,7 +5279,7 @@ async def notify_read_repo_list(owner: str, repo: str, all: str = "", status_typ
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_projects(owner: str, repo: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a repository's projects.
+    """List projects owned by a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5334,7 +5334,7 @@ async def repo_create_project(owner: str, repo: str, description: str, title: st
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def repo_delete_project(owner: str, repo: str, id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project.
+    """Delete a project owned by a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5355,7 +5355,7 @@ async def repo_delete_project(owner: str, repo: str, id: int, sudo: str = "", ct
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_get_project(owner: str, repo: str, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project.
+    """Get a project owned by a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5378,7 +5378,7 @@ async def repo_get_project(owner: str, repo: str, id: int, include_all_fields: b
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_edit_project(owner: str, repo: str, id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project.
+    """Edit a project owned by a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5409,7 +5409,7 @@ async def repo_edit_project(owner: str, repo: str, id: int, card_type: str = '',
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_project_columns(owner: str, repo: str, id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a project's columns.
+    """List columns in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5435,7 +5435,7 @@ async def repo_list_project_columns(owner: str, repo: str, id: int, page: int = 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_create_project_column(owner: str, repo: str, id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a column in a project.
+    """Create a column in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5462,7 +5462,7 @@ async def repo_create_project_column(owner: str, repo: str, id: int, title: str,
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_move_project_columns(owner: str, repo: str, id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Reorder a project's columns.
+    """Reorder columns in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5485,7 +5485,7 @@ async def repo_move_project_columns(owner: str, repo: str, id: int, column_ids: 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def repo_delete_project_column(owner: str, repo: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project column.
+    """Delete a column in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5508,7 +5508,7 @@ async def repo_delete_project_column(owner: str, repo: str, id: int, column_id: 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_get_project_column(owner: str, repo: str, id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project column.
+    """Get a column in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5533,7 +5533,7 @@ async def repo_get_project_column(owner: str, repo: str, id: int, column_id: int
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_edit_project_column(owner: str, repo: str, id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project column.
+    """Edit a column in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5564,7 +5564,7 @@ async def repo_edit_project_column(owner: str, repo: str, id: int, column_id: in
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_set_default_project_column(owner: str, repo: str, id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Set a project's default column.
+    """Set the default column for a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5587,7 +5587,7 @@ async def repo_set_default_project_column(owner: str, repo: str, id: int, column
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_project_column_issues(owner: str, repo: str, id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the issues in a project column.
+    """List issues in a repository project column.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5615,7 +5615,7 @@ async def repo_list_project_column_issues(owner: str, repo: str, id: int, column
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def repo_remove_issue_from_project_column(owner: str, repo: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Remove an issue from a project column.
+    """Remove an issue from a repository project column.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5640,7 +5640,7 @@ async def repo_remove_issue_from_project_column(owner: str, repo: str, id: int, 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_add_issue_to_project_column(owner: str, repo: str, id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add an issue to a project column.
+    """Add an issue to a repository project column.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -5665,7 +5665,7 @@ async def repo_add_issue_to_project_column(owner: str, repo: str, id: int, colum
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def repo_move_project_issue(owner: str, repo: str, id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Move an issue between a project's columns.
+    """Move an issue between columns in a repository project.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -6287,7 +6287,7 @@ async def repo_submit_pull_review(owner: str, repo: str, index: int, id: int, re
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Repo Get Pull Review Comments", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_get_pull_review_comments(owner: str, repo: str, index: int, id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a specific review for a pull request.
+    """List comments for a specific pull request review.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -6954,7 +6954,7 @@ async def repo_get_tag(owner: str, repo: str, tag: str, include_all_fields: bool
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo List Teams", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_list_teams(owner: str, repo: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a repository's teams.
+    """List teams assigned to a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -6974,7 +6974,7 @@ async def repo_list_teams(owner: str, repo: str, include_all_fields: bool = Fals
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Delete Team", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def repo_delete_team(owner: str, repo: str, team: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a team from a repository.
+    """Remove a team from a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -6995,7 +6995,7 @@ async def repo_delete_team(owner: str, repo: str, team: str, sudo: str = "", ctx
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Check Team", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_check_team(owner: str, repo: str, team: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Check if a team is assigned to a repository.
+    """Check whether a team is assigned to a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -7018,7 +7018,7 @@ async def repo_check_team(owner: str, repo: str, team: str, include_all_fields: 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Repo Add Team", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def repo_add_team(owner: str, repo: str, team: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add a team to a repository.
+    """Assign a team to a repository.
 
     Args:
         owner: Repository owner username (e.g. solo).
@@ -7391,7 +7391,7 @@ async def repo_get_by_id(id: int, include_all_fields: bool = False, sudo: str = 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Delete Team", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_delete_team(id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a team.
+    """Delete an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7408,7 +7408,7 @@ async def org_delete_team(id: int, sudo: str = "", ctx: Context = None) -> dict[
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Get Team", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_get_team(id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a team.
+    """Get an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7427,7 +7427,7 @@ async def org_get_team(id: int, include_all_fields: bool = False, sudo: str = ""
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Edit Team", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, description: str = '', includes_all_repositories: bool = False, permission: Literal['read', 'write', 'admin'] = 'read', units: list[str] | None = None, visibility: Literal['public', 'limited', 'private'] = 'public', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a team.
+    """Edit an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7460,7 +7460,7 @@ async def org_edit_team(id: int, name: str, can_create_org_repo: bool = False, d
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="Org List Team Activity Feeds", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_team_activity_feeds(id: int, date: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a team's activity feeds.
+    """List activity feeds for an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7484,7 +7484,7 @@ async def org_list_team_activity_feeds(id: int, date: str = "", page: int = 1, l
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Team Members", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_team_members(id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a team's members.
+    """List members of an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7506,7 +7506,7 @@ async def org_list_team_members(id: int, page: int = 1, limit: int = 50, include
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Remove Team Member", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_remove_team_member(id: int, username: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Remove a team member.
+    """Remove a member from an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7525,7 +7525,7 @@ async def org_remove_team_member(id: int, username: str, sudo: str = "", ctx: Co
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Team Member", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_team_member(id: int, username: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a particular member of team.
+    """Get an organization team member.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7546,7 +7546,7 @@ async def org_list_team_member(id: int, username: str, include_all_fields: bool 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Add Team Member", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_add_team_member(id: int, username: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add a team member.
+    """Add a member to an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7565,7 +7565,7 @@ async def org_add_team_member(id: int, username: str, sudo: str = "", ctx: Conte
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Team Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_team_repos(id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a team's repos.
+    """List repositories assigned to an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7587,7 +7587,7 @@ async def org_list_team_repos(id: int, page: int = 1, limit: int = 50, include_a
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Remove Team Repository", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def org_remove_team_repository(id: int, org: str, repo: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Remove a repository from a team.
+    """Remove a repository from an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7608,7 +7608,7 @@ async def org_remove_team_repository(id: int, org: str, repo: str, sudo: str = "
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Team Repo", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_team_repo(id: int, org: str, repo: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a particular repo of team.
+    """Get a repository assigned to an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7631,7 +7631,7 @@ async def org_list_team_repo(id: int, org: str, repo: str, include_all_fields: b
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Add Team Repository", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_add_team_repository(id: int, org: str, repo: str, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add a repository to a team.
+    """Assign a repository to an organization team.
 
     Args:
         id: Team ID (e.g. 1).
@@ -7691,7 +7691,7 @@ async def user_get_current(include_all_fields: bool = False, sudo: str = "", ctx
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Followers", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_followers(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the authenticated user's followers.
+    """List followers of the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -7711,7 +7711,7 @@ async def user_current_list_followers(page: int = 1, limit: int = 50, include_al
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Following", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_following(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the users that the authenticated user is following.
+    """List users followed by the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -7782,7 +7782,7 @@ async def user_current_put_follow(username: str, sudo: str = "", ctx: Context = 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List Current User Orgs", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_current_user_orgs(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the current user's organizations.
+    """List organizations for the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -7802,7 +7802,7 @@ async def org_list_current_user_orgs(page: int = 1, limit: int = 50, include_all
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_projects(state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List your projects.
+    """List projects owned by the authenticated user.
 
     Args:
         state: State filter. Options: open, closed, or all.
@@ -7849,7 +7849,7 @@ async def user_current_create_project(description: str, title: str, card_type: s
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Delete Project", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_delete_project(id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project.
+    """Delete a project owned by the authenticated user.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7866,7 +7866,7 @@ async def user_current_delete_project(id: int, sudo: str = "", ctx: Context = No
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Get Project", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_get_project(id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project.
+    """Get a project owned by the authenticated user.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7885,7 +7885,7 @@ async def user_current_get_project(id: int, include_all_fields: bool = False, su
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current Edit Project", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_edit_project(id: int, card_type: str = '', description: str = '', state: Literal['open', 'closed'] = 'open', title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project.
+    """Edit a project owned by the authenticated user.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7912,7 +7912,7 @@ async def user_current_edit_project(id: int, card_type: str = '', description: s
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current List Project Columns", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_project_columns(id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a project's columns.
+    """List columns in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7934,7 +7934,7 @@ async def user_current_list_project_columns(id: int, page: int = 1, limit: int =
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Create Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def user_current_create_project_column(id: int, title: str, color: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a column in a project.
+    """Create a column in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7957,7 +7957,7 @@ async def user_current_create_project_column(id: int, title: str, color: str = '
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Move Project Columns", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def user_current_move_project_columns(id: int, column_ids: list[int], sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Reorder a project's columns.
+    """Reorder columns in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7976,7 +7976,7 @@ async def user_current_move_project_columns(id: int, column_ids: list[int], sudo
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Delete Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_delete_project_column(id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Delete a project column.
+    """Delete a column in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -7995,7 +7995,7 @@ async def user_current_delete_project_column(id: int, column_id: int, sudo: str 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Get Project Column", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_get_project_column(id: int, column_id: int, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a project column.
+    """Get a column in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8016,7 +8016,7 @@ async def user_current_get_project_column(id: int, column_id: int, include_all_f
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Edit Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_edit_project_column(id: int, column_id: int, color: str = '', sorting: int = 0, title: str = '', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Edit a project column.
+    """Edit a column in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8043,7 +8043,7 @@ async def user_current_edit_project_column(id: int, column_id: int, color: str =
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Set Default Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def user_current_set_default_project_column(id: int, column_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Set a project's default column.
+    """Set the default column for the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8062,7 +8062,7 @@ async def user_current_set_default_project_column(id: int, column_id: int, sudo:
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current List Project Column Issues", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_project_column_issues(id: int, column_id: int, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the issues in a project column.
+    """List issues in the authenticated user's project column.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8086,7 +8086,7 @@ async def user_current_list_project_column_issues(id: int, column_id: int, page:
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Remove Issue From Project Column", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_remove_issue_from_project_column(id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Remove an issue from a project column.
+    """Remove an issue from the authenticated user's project column.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8107,7 +8107,7 @@ async def user_current_remove_issue_from_project_column(id: int, column_id: int,
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Add Issue To Project Column", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def user_current_add_issue_to_project_column(id: int, column_id: int, issue_id: int, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Add an issue to a project column.
+    """Add an issue to the authenticated user's project column.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8128,7 +8128,7 @@ async def user_current_add_issue_to_project_column(id: int, column_id: int, issu
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Current Move Project Issue", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def user_current_move_project_issue(id: int, issue_id: int, column_id: int, sorting: int = 0, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Move an issue between a project's columns.
+    """Move an issue between columns in the authenticated user's project.
 
     Args:
         id: Resource ID (e.g. 1).
@@ -8151,7 +8151,7 @@ async def user_current_move_project_issue(id: int, issue_id: int, column_id: int
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_repos(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the repos that the authenticated user owns.
+    """List repositories owned by the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -8171,7 +8171,7 @@ async def user_current_list_repos(page: int = 1, limit: int = 50, include_all_fi
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="Create Current User Repo", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 )
 async def create_current_user_repo(description: str, name: str, auto_init: bool = False, default_branch: str = '', gitignores: str = '', issue_labels: str = '', license: str = '', object_format_name: Literal['sha1', 'sha256'] = 'sha1', private: bool = False, readme: str = '', template: bool = False, trust_model: Literal['default', 'collaborator', 'committer', 'collaboratorcommitter'] = 'default', include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Create a repository.
+    """Create a repository for the authenticated user.
 
     Args:
         auto_init: Whether to initialize the repository: true or false.
@@ -8212,7 +8212,7 @@ async def create_current_user_repo(description: str, name: str, auto_init: bool 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Starred", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_starred(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """The repos that the authenticated user has starred.
+    """List repositories starred by the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -8252,7 +8252,7 @@ async def user_get_stop_watches(page: int = 1, limit: int = 50, include_all_fiel
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User Current List Subscriptions", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_current_list_subscriptions(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List repositories watched by the authenticated user.
+    """List repository subscriptions for the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -8272,7 +8272,7 @@ async def user_current_list_subscriptions(page: int = 1, limit: int = 50, includ
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Teams", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_teams(page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List all the teams a user belongs to.
+    """List teams for the authenticated user.
 
     Args:
         page: Page number (1-based) (Default: 1).
@@ -8340,7 +8340,7 @@ async def user_search(q: str = "", uid: int = 0, page: int = 1, limit: int = 50,
     tags={"basic", "gitea"}, annotations=ToolAnnotations(title="User Get", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_get(username: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a user.
+    """Get a user by username.
 
     Args:
         username: Username (e.g. amanda).
@@ -8359,7 +8359,7 @@ async def user_get(username: str, include_all_fields: bool = False, sudo: str = 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User List Activity Feeds", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_activity_feeds(username: str, only_performed_by: bool = False, date: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a user's activity feeds.
+    """List activity feeds for a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8385,7 +8385,7 @@ async def user_list_activity_feeds(username: str, only_performed_by: bool = Fals
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Followers", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_followers(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the given user's followers.
+    """List followers of a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8407,7 +8407,7 @@ async def user_list_followers(username: str, page: int = 1, limit: int = 50, inc
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Following", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_following(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the users that the given user is following.
+    """List users followed by a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8448,7 +8448,7 @@ async def user_check_following(username: str, target: str, sudo: str = "", ctx: 
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User List Gpg Keys", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_gpg_keys(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the given user's GPG keys.
+    """List GPG keys for a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8470,7 +8470,7 @@ async def user_list_gpg_keys(username: str, page: int = 1, limit: int = 50, incl
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User Get Heatmap Data", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_get_heatmap_data(username: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get a user's heatmap.
+    """Get contribution heatmap data for a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8488,7 +8488,7 @@ async def user_get_heatmap_data(username: str, include_all_fields: bool = False,
     tags={"advanced", "gitea"}, annotations=ToolAnnotations(title="User List Keys", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_keys(username: str, fingerprint: str = "", page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the given user's public keys.
+    """List public SSH keys for a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8512,7 +8512,7 @@ async def user_list_keys(username: str, fingerprint: str = "", page: int = 1, li
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org List User Orgs", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_list_user_orgs(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a user's organizations.
+    """List organizations for a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8534,7 +8534,7 @@ async def org_list_user_orgs(username: str, page: int = 1, limit: int = 50, incl
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="Org Get User Permissions", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def org_get_user_permissions(username: str, org: str, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """Get user permissions in organization.
+    """Get a user's permissions in an organization.
 
     Args:
         username: Username (e.g. amanda).
@@ -8555,7 +8555,7 @@ async def org_get_user_permissions(username: str, org: str, include_all_fields: 
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Projects", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_projects(username: str, state: Literal['open', 'closed', 'all'] = 'open', page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List a user's projects.
+    """List projects owned by a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8579,7 +8579,7 @@ async def user_list_projects(username: str, state: Literal['open', 'closed', 'al
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Repos", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_repos(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the repos owned by the given user.
+    """List repositories owned by a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8601,7 +8601,7 @@ async def user_list_repos(username: str, page: int = 1, limit: int = 50, include
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Starred", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_starred(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """The repos that the given user has starred.
+    """List repositories starred by a specified user.
 
     Args:
         username: Username (e.g. amanda).
@@ -8623,7 +8623,7 @@ async def user_list_starred(username: str, page: int = 1, limit: int = 50, inclu
     tags={"primary", "gitea"}, annotations=ToolAnnotations(title="User List Subscriptions", readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 )
 async def user_list_subscriptions(username: str, page: int = 1, limit: int = 50, include_all_fields: bool = False, sudo: str = "", ctx: Context = None) -> dict[str, Any]:
-    """List the repositories watched by a user.
+    """List repository subscriptions for a specified user.
 
     Args:
         username: Username (e.g. amanda).

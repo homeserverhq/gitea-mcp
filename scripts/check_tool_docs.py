@@ -51,6 +51,7 @@ def main() -> int:
     service = "gitea"
     destructive_exceptions = {"issue_unlock_issue", "repo_cancel_scheduled_auto_merge"}
     group_counts: collections.Counter[str] = collections.Counter()
+    summaries: dict[str, list[str]] = collections.defaultdict(list)
 
     for func in tools:
         decorators = [
@@ -112,6 +113,7 @@ def main() -> int:
         if "(optional)" in doc.lower() or "(required)" in doc.lower():
             errors.append(f"{func.name}: remove (optional)/(required) text")
         first = doc.strip().splitlines()[0]
+        summaries[first].append(func.name)
         if not first.endswith("."):
             errors.append(f"{func.name}: function description must end with a period")
 
@@ -155,6 +157,10 @@ def main() -> int:
                 missing = [v for v in values if v not in desc]
                 if missing:
                     errors.append(f"{func.name}.{name}: missing enum values {missing}")
+
+    for summary, names in summaries.items():
+        if len(names) > 1:
+            errors.append(f"duplicate tool description {summary!r}: {', '.join(names)}")
 
     # Pydantic model fields
     for node in tree.body:
