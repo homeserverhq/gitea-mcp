@@ -28,7 +28,7 @@ with full CRUD, search, and repository management.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITEA_BASE_URL` | Yes | Docker-internal URL of the Gitea API (e.g. `http://gitea-app:3000/api/v1`) |
+| `GITEA_BASE_URL` | Yes | Base URL of the Gitea instance (e.g. `http://gitea-app:3000`) |
 | `MCP_SERVER_PORT` | Yes | Port number the MCP server listens on |
 | `ALLOW_ALL_AGGREGATE` | No | When `true`, aggregate listing tools honor the `include_all_fields` parameter. When `false` (default), the parameter is silently forced to `False` for aggregate list operations. |
 | `IS_STATEFUL` | No | When `true`, uses stateful Streamable HTTP with session tracking. When `false` (default), uses stateless mode. |
@@ -42,7 +42,7 @@ with full CRUD, search, and repository management.
     ```
 3. Run the server:
     ```bash
-    export GITEA_BASE_URL=http://gitea-app:3000/api/v1
+    export GITEA_BASE_URL=http://gitea-app:3000
     export MCP_SERVER_PORT=80
     python -m src.main
     ```
@@ -54,7 +54,7 @@ Build and run the server using Docker:
 ```bash
 docker build -t gitea-mcp:latest .
 docker run -d --name gitea-mcp \
-    -e GITEA_BASE_URL="http://gitea-app:3000/api/v1" \
+    -e GITEA_BASE_URL="http://gitea-app:3000" \
     -e MCP_SERVER_PORT=80 \
     gitea-mcp:latest
 ```

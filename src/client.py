@@ -386,9 +386,14 @@ class GiteaClient:
     """Client for Gitea API with auth passthrough."""
 
     def __init__(self, base_url: Optional[str] = None):
-        self.base_url = (base_url or os.getenv("GITEA_BASE_URL", "")).rstrip("/")
-        if not self.base_url:
+        raw = (base_url or os.getenv("GITEA_BASE_URL", "")).rstrip("/")
+        if not raw:
             raise ValueError("Gitea URL required. Set GITEA_BASE_URL env var or pass base_url.")
+        if raw.endswith("/api/v1"):
+            self.base_url = raw
+        else:
+            self.base_url = f"{raw}/api/v1"
+        self.origin = self.base_url[: -len("/api/v1")]
 
     def _get_headers(self, api_key: Optional[str] = None, sudo: str = "") -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -538,8 +543,7 @@ class GiteaClient:
                                      package_name: str, version: str,
                                      filename: str, content: str,
                                      sudo: str = "") -> dict[str, Any]:
-        origin = self.base_url[:-7] if self.base_url.endswith('/api/v1') else self.base_url
-        url = (f"{origin}/api/packages/{quote(owner, safe='')}/generic/"
+        url = (f"{self.origin}/api/packages/{quote(owner, safe='')}/generic/"
                f"{quote(package_name, safe='')}/{quote(version, safe='')}/"
                f"{quote(filename, safe='')}")
         headers = self._get_headers(api_key, sudo)

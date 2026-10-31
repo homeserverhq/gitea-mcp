@@ -53,9 +53,64 @@ def get_user_token() -> Optional[str]:
 # Pydantic Contract Models
 # =============================================================================
 
-class CreateForkOption(BaseModel):
-    name: str = Field(default='', description='name of the forked repository.')
-    organization: str = Field(default='', description='organization name, if forking into an organization.')
+class CreateLabelOption(BaseModel):
+    color: str = Field(..., description='Color.')
+    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
+    exclusive: bool = Field(default=False, description='Exclusive.')
+    is_archived: bool = Field(default=False, description='Is archived.')
+    name: str = Field(..., description='Name.')
+
+class CreateOrgOption(BaseModel):
+    description: str = Field(default='', description='The description of the organization.')
+    email: str = Field(default='', description='The email address of the organization.')
+    full_name: str = Field(default='', description='The full display name of the organization.')
+    location: str = Field(default='', description='The location of the organization.')
+    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
+    username: str = Field(..., description='username of the organization.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public` (default), `limited` or `private`.')
+    website: str = Field(default='', description='The website URL of the organization.')
+
+class EditBranchProtectionOption(BaseModel):
+    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
+    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
+    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
+    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
+    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
+    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
+    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
+    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
+    enable_force_push: bool = Field(default=False, description='Enable force push.')
+    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
+    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
+    enable_push: bool = Field(default=False, description='Enable push.')
+    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
+    enable_status_check: bool = Field(default=False, description='Enable status check.')
+    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
+    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
+    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
+    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
+    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
+    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
+    priority: int = Field(default=0, description='Priority.')
+    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
+    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
+    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
+    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
+    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
+    required_approvals: int = Field(default=0, description='Required approvals.')
+    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
+    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
+
+class CreatePullReviewComment(BaseModel):
+    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
+    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
+    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
+    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
+
+class IssueMeta(BaseModel):
+    index: int = Field(default=0, description='Index.')
+    owner: str = Field(default='', description="owner of the issue's repo.")
+    repo: str = Field(default='', description='Repo.')
 
 class CreateRepoOption(BaseModel):
     auto_init: bool = Field(default=False, description='Whether the repository should be auto-initialized?.')
@@ -70,6 +125,54 @@ class CreateRepoOption(BaseModel):
     readme: str = Field(default='', description='Readme of the repository to create.')
     template: bool = Field(default=False, description='Whether the repository is template.')
     trust_model: Optional[Literal['default', 'collaborator', 'committer', 'collaboratorcommitter']] = Field(default='default', description='TrustModel of the repository.')
+
+class RenameOrgOption(BaseModel):
+    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
+
+class PullReviewRequestOptions(BaseModel):
+    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
+    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
+
+class CreateIssueOption(BaseModel):
+    assignee: str = Field(default='', description='deprecated.')
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+    body: str = Field(default='', description='Body.')
+    closed: bool = Field(default=False, description='Closed.')
+    due_date: str = Field(default='', description='Due date.')
+    labels: Optional[list[int]] = Field(default=None, description='list of label ids.')
+    milestone: int = Field(default=0, description='milestone id.')
+    ref: str = Field(default='', description='Ref.')
+    title: str = Field(..., description='Title.')
+
+class EditDeadlineOption(BaseModel):
+    due_date: str = Field(..., description='Due date.')
+
+class DismissPullReviewOptions(BaseModel):
+    message: str = Field(default='', description='Message.')
+    priors: bool = Field(default=False, description='Priors.')
+
+class GenerateRepoOption(BaseModel):
+    avatar: bool = Field(default=False, description='include avatar of the template repo.')
+    default_branch: str = Field(default='', description='Default branch of the new repository.')
+    description: str = Field(default='', description='Description of the repository to create.')
+    git_content: bool = Field(default=False, description='include git content of default branch in template repo.')
+    git_hooks: bool = Field(default=False, description='include git hooks in template repo.')
+    labels: bool = Field(default=False, description='include labels in template repo.')
+    name: str = Field(..., description='Name.')
+    owner: str = Field(..., description="the organization's name or individual user's name who will own the new repository.")
+    private: bool = Field(default=False, description='Whether the repository is private.')
+    protected_branch: bool = Field(default=False, description='include protected branches in template repo.')
+    topics: bool = Field(default=False, description='include topics in template repo.')
+    webhooks: bool = Field(default=False, description='include webhooks in template repo.')
+
+class AddCollaboratorOption(BaseModel):
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
+
+class CreateStatusOption(BaseModel):
+    context: str = Field(default='', description='Context is the unique context identifier for the status.')
+    description: str = Field(default='', description='Description provides a brief description of the status.')
+    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure) pending CommitStatusPending  CommitStatusPending is for when the CommitStatus is Pending success CommitStatusSuccess  CommitStatusSuccess is for when the CommitStatus is Success error CommitStatusError  CommitStatusError is for when the CommitStatus is Error failure CommitStatusFailure  CommitStatusFailure is for when the CommitStatus is Failure warning CommitStatusWarning  CommitStatusWarning is for when the CommitStatus is Warning skipped CommitStatusSkipped  CommitStatusSkipped is for when CommitStatus is Skipped.')
+    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
 
 class MigrateRepoOptions(BaseModel):
     auth_password: str = Field(default='', description='Auth password.')
@@ -95,10 +198,13 @@ class MigrateRepoOptions(BaseModel):
     uid: int = Field(default=0, description='deprecated (only for backwards compatibility, use repo_owner instead).')
     wiki: bool = Field(default=False, description='Wiki.')
 
-class InternalTracker(BaseModel):
-    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
-    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
-    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
+class CreateTagProtectionOption(BaseModel):
+    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
+    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
+    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
+
+class IssueLabelsOption(BaseModel):
+    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
 
 class CreateBranchProtectionOption(BaseModel):
     approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
@@ -133,23 +239,25 @@ class CreateBranchProtectionOption(BaseModel):
     status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
     unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
 
-class CreateIssueOption(BaseModel):
-    assignee: str = Field(default='', description='deprecated.')
-    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
-    body: str = Field(default='', description='Body.')
-    closed: bool = Field(default=False, description='Closed.')
-    due_date: str = Field(default='', description='Due date.')
-    labels: Optional[list[int]] = Field(default=None, description='list of label ids.')
-    milestone: int = Field(default=0, description='milestone id.')
-    ref: str = Field(default='', description='Ref.')
-    title: str = Field(..., description='Title.')
+class CreateReleaseOption(BaseModel):
+    body: str = Field(default='', description='The release notes or description.')
+    draft: bool = Field(default=False, description='Whether to create the release as a draft.')
+    name: str = Field(default='', description='The display title of the release.')
+    prerelease: bool = Field(default=False, description='Whether to mark the release as a prerelease.')
+    tag_message: str = Field(default='', description='The message for the git tag.')
+    tag_name: str = Field(..., description='Tag name.')
+    target_commitish: str = Field(default='', description='The target commitish for the release.')
 
-class ChangeFileOperation(BaseModel):
-    content: str = Field(default='', description='Plain-text file content.')
-    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
-    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
-    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
-    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
+class EditTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
+    units: Optional[list[str]] = Field(default=None, description='Units.')
+
+class RenameBranchRepoOption(BaseModel):
+    name: str = Field(..., description='New branch name.')
 
 class CreatePullRequestOption(BaseModel):
     assignee: str = Field(default='', description='The primary assignee username.')
@@ -164,14 +272,88 @@ class CreatePullRequestOption(BaseModel):
     team_reviewers: Optional[list[str]] = Field(default=None, description='The list of team reviewer names.')
     title: str = Field(default='', description='The title of the pull request.')
 
-class CreatePullReviewComment(BaseModel):
-    body: str = Field(default='', description='Review comment text (e.g. Please add unit tests).')
-    new_position: int = Field(default=0, description='Line number in the new file version, or 0 (e.g. 12).')
-    old_position: int = Field(default=0, description='Line number in the old file version, or 0 (e.g. 0).')
-    path: str = Field(default='', description='File path relative to the repository root (e.g. src/main.py).')
+class CommitDateOptions(BaseModel):
+    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
+
+class UpdateBranchProtectionPriories(BaseModel):
+    ids: Optional[list[int]] = Field(default=None, description='Ids.')
+
+class CreateBranchRepoOption(BaseModel):
+    new_branch_name: str = Field(..., description='Name of the branch to create.')
+    old_branch_name: str = Field(default='', description='Deprecated: true Name of the old branch to create from.')
+    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
+
+class ExternalTracker(BaseModel):
+    external_tracker_format: str = Field(default='', description='External issue tracker URL format using {user}, {repo}, and {index} placeholders (e.g. https://tracker.example.com/{repo}/{index}).')
+    external_tracker_regexp_pattern: str = Field(default='', description='Regular expression matching external issue numbers (e.g. \\\\d+).')
+    external_tracker_style: str = Field(default='', description='External issue number format: numeric, alphanumeric, or regexp.')
+    external_tracker_url: str = Field(default='', description='External issue tracker URL (e.g. https://tracker.example.com).')
+
+class Identity(BaseModel):
+    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
+    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
+
+class CreateTeamOption(BaseModel):
+    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
+    description: str = Field(default='', description='The description of the team.')
+    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
+    name: str = Field(..., description='Name.')
+    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
+    units: Optional[list[str]] = Field(default=None, description='Units.')
 
 class EditReactionOption(BaseModel):
     content: str = Field(default='', description='The reaction content (e.g., emoji or reaction type).')
+
+class EditIssueOption(BaseModel):
+    assignee: str = Field(default='', description='deprecated.')
+    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
+    body: str = Field(default='', description='Body.')
+    due_date: str = Field(default='', description='Due date.')
+    milestone: int = Field(default=0, description='Milestone.')
+    ref: str = Field(default='', description='Ref.')
+    state: str = Field(default='', description='State.')
+    title: str = Field(default='', description='Title.')
+    unset_due_date: bool = Field(default=False, description='Unset due date.')
+
+class LockIssueOption(BaseModel):
+    lock_reason: str = Field(default='', description='Lock reason.')
+
+class EditIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body.')
+
+class ApplyDiffPatchFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='Content.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class CreateMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides details about the milestone.')
+    due_on: str = Field(default='', description='Due on.')
+    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
+    title: str = Field(default='', description='Title is the title of the new milestone.')
+
+class ExternalWiki(BaseModel):
+    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
+
+class CreateFileOptions(BaseModel):
+    author: Optional[Identity] = Field(default=None, description='Author.')
+    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
+    committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='content must be base64 encoded.')
+    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
+    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
+    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
+
+class MergeUpstreamRequest(BaseModel):
+    branch: str = Field(default='', description='Branch.')
+    ff_only: bool = Field(default=False, description='Ff only.')
 
 class EditReleaseOption(BaseModel):
     body: str = Field(default='', description='The new release notes or description.')
@@ -181,63 +363,25 @@ class EditReleaseOption(BaseModel):
     tag_name: str = Field(default='', description='The new name of the git tag.')
     target_commitish: str = Field(default='', description='The new target commitish for the release.')
 
-class EditOrgOption(BaseModel):
-    description: str = Field(default='', description='The description of the organization.')
-    email: str = Field(default='', description='The email address of the organization.')
-    full_name: str = Field(default='', description='The full display name of the organization.')
-    location: str = Field(default='', description='The location of the organization.')
-    repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
-    website: str = Field(default='', description='The website URL of the organization.')
+class ChangeFileOperation(BaseModel):
+    content: str = Field(default='', description='Plain-text file content.')
+    from_path: str = Field(default='', description='Original file path for a rename or move (e.g. old.txt).')
+    operation: Literal['create', 'update', 'upload', 'rename', 'delete'] = Field(..., description='File operation: create, update, upload, rename, or delete.')
+    path: str = Field(..., description='File path relative to the repository root (e.g. docs/README.md).')
+    sha: str = Field(default='', description='Blob SHA for an existing file (e.g. 0c7c3302299b0d70fd8d60bbd4f059b38d681b64).')
 
-class MergePullRequestOption(BaseModel):
-    Do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'] = Field(..., description='Do.')
-    MergeCommitID: str = Field(default='', description='Mergecommitid.')
-    MergeMessageField: str = Field(default='', description='Mergemessagefield.')
-    MergeTitleField: str = Field(default='', description='Mergetitlefield.')
-    delete_branch_after_merge: bool = Field(default=False, description='Delete branch after merge.')
-    force_merge: bool = Field(default=False, description='Force merge.')
-    head_commit_id: str = Field(default='', description='Head commit id.')
-    merge_when_checks_succeed: bool = Field(default=False, description='Merge when checks succeed.')
+class AddTimeOption(BaseModel):
+    created: str = Field(default='', description='Created.')
+    time: int = Field(..., description='time in seconds.')
+    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
 
-class CreateBranchRepoOption(BaseModel):
-    new_branch_name: str = Field(..., description='Name of the branch to create.')
-    old_branch_name: str = Field(default='', description='Deprecated: true Name of the old branch to create from.')
-    old_ref_name: str = Field(default='', description='Name of the old branch/tag/commit to create from.')
+class CreateIssueCommentOption(BaseModel):
+    body: str = Field(..., description='Body.')
 
-class EditBranchProtectionOption(BaseModel):
-    approvals_whitelist_teams: Optional[list[str]] = Field(default=None, description='Approvals whitelist teams.')
-    approvals_whitelist_username: Optional[list[str]] = Field(default=None, description='Approvals whitelist username.')
-    block_admin_merge_override: bool = Field(default=False, description='Block admin merge override.')
-    block_on_official_review_requests: bool = Field(default=False, description='Block on official review requests.')
-    block_on_outdated_branch: bool = Field(default=False, description='Block on outdated branch.')
-    block_on_rejected_reviews: bool = Field(default=False, description='Block on rejected reviews.')
-    dismiss_stale_approvals: bool = Field(default=False, description='Dismiss stale approvals.')
-    enable_approvals_whitelist: bool = Field(default=False, description='Enable approvals whitelist.')
-    enable_force_push: bool = Field(default=False, description='Enable force push.')
-    enable_force_push_allowlist: bool = Field(default=False, description='Enable force push allowlist.')
-    enable_merge_whitelist: bool = Field(default=False, description='Enable merge whitelist.')
-    enable_push: bool = Field(default=False, description='Enable push.')
-    enable_push_whitelist: bool = Field(default=False, description='Enable push whitelist.')
-    enable_status_check: bool = Field(default=False, description='Enable status check.')
-    force_push_allowlist_deploy_keys: bool = Field(default=False, description='Force push allowlist deploy keys.')
-    force_push_allowlist_teams: Optional[list[str]] = Field(default=None, description='Force push allowlist teams.')
-    force_push_allowlist_usernames: Optional[list[str]] = Field(default=None, description='Force push allowlist usernames.')
-    ignore_stale_approvals: bool = Field(default=False, description='Ignore stale approvals.')
-    merge_whitelist_teams: Optional[list[str]] = Field(default=None, description='Merge whitelist teams.')
-    merge_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Merge whitelist usernames.')
-    priority: int = Field(default=0, description='Priority.')
-    protected_file_patterns: str = Field(default='', description='Protected file patterns.')
-    push_whitelist_deploy_keys: bool = Field(default=False, description='Push whitelist deploy keys.')
-    push_whitelist_teams: Optional[list[str]] = Field(default=None, description='Push whitelist teams.')
-    push_whitelist_usernames: Optional[list[str]] = Field(default=None, description='Push whitelist usernames.')
-    require_signed_commits: bool = Field(default=False, description='Require signed commits.')
-    required_approvals: int = Field(default=0, description='Required approvals.')
-    status_check_contexts: Optional[list[str]] = Field(default=None, description='Status check contexts.')
-    unprotected_file_patterns: str = Field(default='', description='Unprotected file patterns.')
-
-class RenameOrgOption(BaseModel):
-    new_name: str = Field(..., description='New username for this org. This name cannot be in use yet by any other user.')
+class InternalTracker(BaseModel):
+    allow_only_contributors_to_track_time: bool = Field(default=False, description='Only allow contributors to track time: true or false (Default: false).')
+    enable_issue_dependencies: bool = Field(default=False, description='Enable issue dependencies: true or false (Default: false).')
+    enable_time_tracker: bool = Field(default=False, description='Enable time tracking: true or false (Default: false).')
 
 class EditTagProtectionOption(BaseModel):
     name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
@@ -249,42 +393,17 @@ class CreateTagOption(BaseModel):
     tag_name: str = Field(..., description='Tag name.')
     target: str = Field(default='', description='The target commit SHA or branch name for the tag.')
 
-class RenameBranchRepoOption(BaseModel):
-    name: str = Field(..., description='New branch name.')
-
-class EditMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides updated details about the milestone.')
-    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
-    state: str = Field(default='', description='State indicates the updated state of the milestone.')
-    title: str = Field(default='', description='Title is the updated title of the milestone.')
-
-class AddCollaboratorOption(BaseModel):
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
-
-class IssueLabelsOption(BaseModel):
-    labels: Optional[list[Any]] = Field(default=None, description='Labels can be a list of integers representing label IDs or a list of strings representing label names.')
-
-class CreateTagProtectionOption(BaseModel):
-    name_pattern: str = Field(default='', description='The pattern to match tag names for protection.')
-    whitelist_teams: Optional[list[str]] = Field(default=None, description='List of team names allowed to create/delete protected tags.')
-    whitelist_usernames: Optional[list[str]] = Field(default=None, description='List of usernames allowed to create/delete protected tags.')
-
-class ExternalWiki(BaseModel):
-    external_wiki_url: str = Field(default='', description='External wiki URL (e.g. https://wiki.example.com).')
-
-class PullReviewRequestOptions(BaseModel):
-    reviewers: Optional[list[str]] = Field(default=None, description='Reviewers.')
-    team_reviewers: Optional[list[str]] = Field(default=None, description='Team reviewers.')
-
-class CreateOrgOption(BaseModel):
+class EditOrgOption(BaseModel):
     description: str = Field(default='', description='The description of the organization.')
     email: str = Field(default='', description='The email address of the organization.')
     full_name: str = Field(default='', description='The full display name of the organization.')
     location: str = Field(default='', description='The location of the organization.')
     repo_admin_change_team_access: bool = Field(default=False, description='Whether repository administrators can change team access.')
-    username: str = Field(..., description='username of the organization.')
-    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public` (default), `limited` or `private`.')
+    visibility: Optional[Literal['public', 'limited', 'private']] = Field(default='public', description='possible values are `public`, `limited` or `private`.')
     website: str = Field(default='', description='The website URL of the organization.')
+
+class RepoTopicOptions(BaseModel):
+    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
 
 class EditLabelOption(BaseModel):
     color: str = Field(default='', description='Color.')
@@ -293,84 +412,20 @@ class EditLabelOption(BaseModel):
     is_archived: bool = Field(default=False, description='Is archived.')
     name: str = Field(default='', description='Name is the new display name for the label.')
 
-class Identity(BaseModel):
-    email: str = Field(default='', description='Email address (e.g. jane@example.com).')
-    name: str = Field(default='', description="Person's name (e.g. Jane Doe).")
-
 class CreateKeyOption(BaseModel):
     key: str = Field(..., description='An armored SSH key to add.')
     read_only: bool = Field(default=False, description='Describe if the key has only read access or read/write.')
     title: str = Field(..., description='Title of the key to add.')
 
-class LockIssueOption(BaseModel):
-    lock_reason: str = Field(default='', description='Lock reason.')
+class EditMilestoneOption(BaseModel):
+    description: str = Field(default='', description='Description provides updated details about the milestone.')
+    due_on: str = Field(default='', description='Deadline is the updated due date for the milestone.')
+    state: str = Field(default='', description='State indicates the updated state of the milestone.')
+    title: str = Field(default='', description='Title is the updated title of the milestone.')
 
-class CreateReleaseOption(BaseModel):
-    body: str = Field(default='', description='The release notes or description.')
-    draft: bool = Field(default=False, description='Whether to create the release as a draft.')
-    name: str = Field(default='', description='The display title of the release.')
-    prerelease: bool = Field(default=False, description='Whether to mark the release as a prerelease.')
-    tag_message: str = Field(default='', description='The message for the git tag.')
-    tag_name: str = Field(..., description='Tag name.')
-    target_commitish: str = Field(default='', description='The target commitish for the release.')
-
-class EditDeadlineOption(BaseModel):
-    due_date: str = Field(..., description='Due date.')
-
-class GenerateRepoOption(BaseModel):
-    avatar: bool = Field(default=False, description='include avatar of the template repo.')
-    default_branch: str = Field(default='', description='Default branch of the new repository.')
-    description: str = Field(default='', description='Description of the repository to create.')
-    git_content: bool = Field(default=False, description='include git content of default branch in template repo.')
-    git_hooks: bool = Field(default=False, description='include git hooks in template repo.')
-    labels: bool = Field(default=False, description='include labels in template repo.')
-    name: str = Field(..., description='Name.')
-    owner: str = Field(..., description="the organization's name or individual user's name who will own the new repository.")
-    private: bool = Field(default=False, description='Whether the repository is private.')
-    protected_branch: bool = Field(default=False, description='include protected branches in template repo.')
-    topics: bool = Field(default=False, description='include topics in template repo.')
-    webhooks: bool = Field(default=False, description='include webhooks in template repo.')
-
-class IssueMeta(BaseModel):
-    index: int = Field(default=0, description='Index.')
-    owner: str = Field(default='', description="owner of the issue's repo.")
-    repo: str = Field(default='', description='Repo.')
-
-class DismissPullReviewOptions(BaseModel):
-    message: str = Field(default='', description='Message.')
-    priors: bool = Field(default=False, description='Priors.')
-
-class ExternalTracker(BaseModel):
-    external_tracker_format: str = Field(default='', description='External issue tracker URL format using {user}, {repo}, and {index} placeholders (e.g. https://tracker.example.com/{repo}/{index}).')
-    external_tracker_regexp_pattern: str = Field(default='', description='Regular expression matching external issue numbers (e.g. \\\\d+).')
-    external_tracker_style: str = Field(default='', description='External issue number format: numeric, alphanumeric, or regexp.')
-    external_tracker_url: str = Field(default='', description='External issue tracker URL (e.g. https://tracker.example.com).')
-
-class CreateMilestoneOption(BaseModel):
-    description: str = Field(default='', description='Description provides details about the milestone.')
-    due_on: str = Field(default='', description='Due on.')
-    state: Optional[Literal['open', 'closed']] = Field(default='open', description='State.')
-    title: str = Field(default='', description='Title is the title of the new milestone.')
-
-class CreateLabelOption(BaseModel):
-    color: str = Field(..., description='Color.')
-    description: str = Field(default='', description="Description provides additional context about the label's purpose.")
-    exclusive: bool = Field(default=False, description='Exclusive.')
-    is_archived: bool = Field(default=False, description='Is archived.')
-    name: str = Field(..., description='Name.')
-
-class AddTimeOption(BaseModel):
-    created: str = Field(default='', description='Created.')
-    time: int = Field(..., description='time in seconds.')
-    user_name: str = Field(default='', description='username of the user who spent the time working on the issue (optional).')
-
-class CreateTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
-    units: Optional[list[str]] = Field(default=None, description='Units.')
+class CreateForkOption(BaseModel):
+    name: str = Field(default='', description='name of the forked repository.')
+    organization: str = Field(default='', description='organization name, if forking into an organization.')
 
 class EditPullRequestOption(BaseModel):
     allow_maintainer_edit: bool = Field(default=False, description='Whether to allow maintainer edits.')
@@ -385,64 +440,31 @@ class EditPullRequestOption(BaseModel):
     title: str = Field(default='', description='The new title for the pull request.')
     unset_due_date: bool = Field(default=False, description='Whether to remove the current deadline.')
 
+class MergePullRequestOption(BaseModel):
+    Do: Literal['merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', 'manually-merged'] = Field(..., description='Do.')
+    MergeCommitID: str = Field(default='', description='Mergecommitid.')
+    MergeMessageField: str = Field(default='', description='Mergemessagefield.')
+    MergeTitleField: str = Field(default='', description='Mergetitlefield.')
+    delete_branch_after_merge: bool = Field(default=False, description='Delete branch after merge.')
+    force_merge: bool = Field(default=False, description='Force merge.')
+    head_commit_id: str = Field(default='', description='Head commit id.')
+    merge_when_checks_succeed: bool = Field(default=False, description='Merge when checks succeed.')
+
 class CreateWikiPageOptions(BaseModel):
     content_base64: str = Field(default='', description='content must be base64 encoded.')
     message: str = Field(default='', description='optional commit message summarizing the change.')
     title: str = Field(default='', description='page title. leave empty to keep unchanged.')
 
-class CreateStatusOption(BaseModel):
-    context: str = Field(default='', description='Context is the unique context identifier for the status.')
-    description: str = Field(default='', description='Description provides a brief description of the status.')
-    state: Optional[Literal['pending', 'success', 'error', 'failure', 'warning', 'skipped']] = Field(default='pending', description='State represents the status state to set (pending, success, error, failure) pending CommitStatusPending  CommitStatusPending is for when the CommitStatus is Pending success CommitStatusSuccess  CommitStatusSuccess is for when the CommitStatus is Success error CommitStatusError  CommitStatusError is for when the CommitStatus is Error failure CommitStatusFailure  CommitStatusFailure is for when the CommitStatus is Failure warning CommitStatusWarning  CommitStatusWarning is for when the CommitStatus is Warning skipped CommitStatusSkipped  CommitStatusSkipped is for when CommitStatus is Skipped.')
-    target_url: str = Field(default='', description='TargetURL is the URL to link to for more details.')
-
-class CreateIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body.')
-
-class EditTeamOption(BaseModel):
-    can_create_org_repo: bool = Field(default=False, description='Whether the team can create repositories in the organization.')
-    description: str = Field(default='', description='The description of the team.')
-    includes_all_repositories: bool = Field(default=False, description='Whether the team has access to all repositories in the organization.')
-    name: str = Field(..., description='Name.')
-    permission: Optional[Literal['read', 'write', 'admin']] = Field(default='read', description='Permission.')
-    units: Optional[list[str]] = Field(default=None, description='Units.')
-
-class RepoTopicOptions(BaseModel):
-    topics: Optional[list[str]] = Field(default=None, description='list of topic names.')
-
-class UpdateBranchProtectionPriories(BaseModel):
-    ids: Optional[list[int]] = Field(default=None, description='Ids.')
-
-class CommitDateOptions(BaseModel):
-    author: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-    committer: str = Field(default='', description='ISO 8601 format (2026-06-22T15:00:00-04:00).')
-
-class EditIssueOption(BaseModel):
-    assignee: str = Field(default='', description='deprecated.')
-    assignees: Optional[list[str]] = Field(default=None, description='Assignees.')
-    body: str = Field(default='', description='Body.')
-    due_date: str = Field(default='', description='Due date.')
-    milestone: int = Field(default=0, description='Milestone.')
-    ref: str = Field(default='', description='Ref.')
-    state: str = Field(default='', description='State.')
-    title: str = Field(default='', description='Title.')
-    unset_due_date: bool = Field(default=False, description='Unset due date.')
-
-class MergeUpstreamRequest(BaseModel):
-    branch: str = Field(default='', description='Branch.')
-    ff_only: bool = Field(default=False, description='Ff only.')
-
-class EditIssueCommentOption(BaseModel):
-    body: str = Field(..., description='Body.')
-
-class ChangeFilesOptions(BaseModel):
+class UpdateFileOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
     branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
     committer: Optional[Identity] = Field(default=None, description='Committer.')
+    content: str = Field(..., description='content must be base64 encoded.')
     dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
+    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
     message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
     new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
+    sha: str = Field(..., description='the blob ID (SHA) for the file that already exists, it is required for changing existing files.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
 class EditRepoOption(BaseModel):
@@ -480,18 +502,6 @@ class EditRepoOption(BaseModel):
     template: bool = Field(default=False, description='either `true` to make this repository a template or `false` to make it a normal repository.')
     website: str = Field(default='', description='a URL with more information about the repository.')
 
-class UpdateFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='content must be base64 encoded.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    from_path: str = Field(default='', description='from_path (optional) is the path of the original file which will be moved/renamed to the path in the URL.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    sha: str = Field(..., description='the blob ID (SHA) for the file that already exists, it is required for changing existing files.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
 class DeleteFileOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
     branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
@@ -502,22 +512,12 @@ class DeleteFileOptions(BaseModel):
     sha: str = Field(..., description='the blob ID (SHA) for the file that already exists, it is required for changing existing files.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
 
-class CreateFileOptions(BaseModel):
+class ChangeFilesOptions(BaseModel):
     author: Optional[Identity] = Field(default=None, description='Author.')
     branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
     committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='content must be base64 encoded.')
     dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
-    message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
-    new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
-    signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
-
-class ApplyDiffPatchFileOptions(BaseModel):
-    author: Optional[Identity] = Field(default=None, description='Author.')
-    branch: str = Field(default='', description='branch (optional) to base this file from. if not given, the default branch is used.')
-    committer: Optional[Identity] = Field(default=None, description='Committer.')
-    content: str = Field(..., description='Content.')
-    dates: Optional[CommitDateOptions] = Field(default=None, description='Dates.')
+    files: list[ChangeFileOperation] = Field(..., description='list of file operations.')
     message: str = Field(default='', description='message (optional) for the commit of this file. if not supplied, a default message will be used.')
     new_branch: str = Field(default='', description='new_branch (optional) will make a new branch from `branch` before creating the file.')
     signoff: bool = Field(default=False, description='Add a Signed-off-by trailer by the committer at the end of the commit log message.')
