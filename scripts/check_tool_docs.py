@@ -79,6 +79,30 @@ def main() -> int:
             errors.append(f"{func.name}: expected exactly one group tag, got {sorted(tag_values & groups)}")
         else:
             group_counts[next(iter(tag_values & groups))] += 1
+        spec = TOOL_SPECS.get(func.name)
+        if spec:
+            method = spec["method"]
+            kind = spec["response"]
+            sig_names = [a.arg for a in func.args.args]
+            seg = ast.get_source_segment(MAIN.read_text(), func) or ""
+            if method == "GET" and kind == "list":
+                if "args[\"include_all_fields\"] = include_all_fields if ALLOW_ALL_AGGREGATE else False" not in seg:
+                    errors.append(f"{func.name}: bulk GET must conditionally honor include_all_fields")
+            elif method == "GET" and kind == "object":
+                if "args[\"include_all_fields\"] = include_all_fields" not in seg:
+                    errors.append(f"{func.name}: single GET must pass include_all_fields through")
+            elif method in ("POST", "PUT", "PATCH") and kind in ("list", "object"):
+                if "args[\"include_all_fields\"] = ALLOW_ALL_AGGREGATE" not in seg:
+                    errors.append(f"{func.name}: create/update must use ALLOW_ALL_AGGREGATE")
+            elif method in ("POST", "PUT", "PATCH"):
+                if "include_all_fields" in sig_names:
+                    errors.append(f"{func.name}: empty-response mutation must not expose include_all_fields")
+            elif method == "DELETE":
+                if "include_all_fields" in sig_names:
+                    errors.append(f"{func.name}: DELETE must not expose include_all_fields")
+                if not re.search(r'return\s+\{\s*["\']deleted["\']\s*:\s*True\s*\}', seg):
+                    errors.append(f"{func.name}: DELETE must return {{'deleted': True}}")
+
         ann = kwargs.get("annotations")
         if not isinstance(ann, ast.Call):
             errors.append(f"{func.name}: missing ToolAnnotations")

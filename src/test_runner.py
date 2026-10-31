@@ -440,6 +440,37 @@ async def setup(session: MCPSession) -> None:
         },
     )
     capture("repo_create_file", {"filepath": state["filepath"]}, data)
+    data = await run(
+        session,
+        "S005a1 commit_info",
+        "repo_get_single_commit",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "sha": state["test_branch"],
+            "include_all_fields": True,
+        },
+    )
+    if isinstance(data, dict):
+        state["sha"] = data.get("sha") or state.get("sha")
+        tree = (data.get("commit") or {}).get("tree") or {}
+        if tree.get("sha"):
+            state["tree_sha"] = tree["sha"]
+    data = await run(
+        session,
+        "S005a2 file_info",
+        "repo_get_contents",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "filepath": state["filepath"],
+            "ref": state["test_branch"],
+            "include_all_fields": True,
+        },
+    )
+    if isinstance(data, dict) and data.get("sha"):
+        state["file_sha"] = data["sha"]
+        state["test_file_sha"] = data["sha"]
 
     data = await run(
         session,
@@ -471,6 +502,20 @@ async def setup(session: MCPSession) -> None:
     if isinstance(data, dict):
         c = data.get("content") or {}
         state["file2_sha"] = c.get("sha")
+    data = await run(
+        session,
+        "S005d file2_info",
+        "repo_get_contents",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "filepath": state["file2_path"],
+            "ref": state["file_branch"],
+            "include_all_fields": True,
+        },
+    )
+    if isinstance(data, dict) and data.get("sha"):
+        state["file2_sha"] = data["sha"]
 
     data = await run(
         session,
@@ -810,6 +855,21 @@ async def setup(session: MCPSession) -> None:
         },
     )
     capture("repo_create_pull_request", {}, data)
+    data = await run(
+        session,
+        "S027a refresh_pr",
+        "repo_get_pull_request",
+        {
+            "owner": state["owner"],
+            "repo": state["repo"],
+            "index": state.get("pr_index", 0),
+            "include_all_fields": True,
+        },
+    )
+    if isinstance(data, dict):
+        head = data.get("head") or {}
+        if head.get("sha"):
+            state["pr_head_sha"] = head["sha"]
 
     await run(
         session,
@@ -2079,6 +2139,19 @@ async def main() -> None:
             data = await run(session, f"MUT {tool}", tool, build_args(tool, spec))
             if data is not None:
                 capture(tool, build_args(tool, spec), data)
+
+        data = await run(
+            session, "PRE file2_info", "repo_get_contents",
+            {
+                "owner": state.get("owner", ""),
+                "repo": state.get("repo", ""),
+                "filepath": state.get("file2_path", ""),
+                "ref": state.get("file_branch", ""),
+                "include_all_fields": True,
+            },
+        )
+        if isinstance(data, dict) and data.get("sha"):
+            state["file2_sha"] = data["sha"]
 
         # Start a stopwatch on issue 2 so delete_stop_watch has a live fixture
         await run(
