@@ -434,7 +434,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "filepath": state["filepath"],
-            "content": b64("hello from gitea mcp test\n"),
+            "content": "hello from gitea mcp test\n",
             "message": "add test file",
             "branch": state["test_branch"],
         },
@@ -449,7 +449,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "filepath": f"diff-{rid}.txt",
-            "content": b64("old\n"),
+            "content": "old\n",
             "message": "diff fixture",
             "branch": state["file_branch"],
         },
@@ -463,7 +463,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "filepath": state["file2_path"],
-            "content": b64("update me\n"),
+            "content": "update me\n",
             "message": "file fixture",
             "branch": state["file_branch"],
         },
@@ -526,7 +526,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "title": state["wiki_page"],
-            "content_base64": b64("wiki content one\n"),
+            "content": "wiki content one\n",
             "message": "create wiki",
         },
     )
@@ -540,7 +540,7 @@ async def setup(session: MCPSession) -> None:
             "repo": state["repo"],
             "pageName": state["wiki_page"],
             "title": state.get("wiki_title") or state["wiki_page"],
-            "content_base64": b64("wiki content two\n"),
+            "content": "wiki content two\n",
             "message": "update wiki",
         },
     )
@@ -808,7 +808,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "filepath": f"base-{rid}.txt",
-            "content": b64("base advance\n"),
+            "content": "base advance\n",
             "message": "advance base",
             "branch": state["base"],
         },
@@ -823,8 +823,8 @@ async def setup(session: MCPSession) -> None:
             "repo": state["repo"],
             "sha": state.get("pr_head_sha") or state.get("sha") or "",
             "state": "pending",
-            "context": "gitea-mcp-check",
-            "description": "pending test status",
+            "status_context": "gitea-mcp-check",
+            "status_description": "pending test status",
         },
     )
     capture("repo_create_status", {}, data)
@@ -838,11 +838,11 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "index": state["pr_index"],
-            "event": "COMMENT",
-            "body": "review body",
-            "comments": [
-                {"path": state["filepath"], "body": "line comment", "new_position": 1}
-            ],
+            "review_event": "COMMENT",
+            "review_body": "review body",
+            "comment_path": state["filepath"],
+            "comment_body": "line comment",
+            "comment_new_position": 1,
         },
     )
     capture("repo_create_pull_review", {}, data)
@@ -854,8 +854,8 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "index": state["pr_index"],
-            "event": "PENDING",
-            "body": "pending review",
+            "review_event": "PENDING",
+            "review_body": "pending review",
         },
     )
     if isinstance(data, dict):
@@ -868,8 +868,8 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "index": state["pr_index"],
-            "event": "APPROVED",
-            "body": "approved review",
+            "review_event": "APPROVED",
+            "review_body": "approved review",
             "sudo": TARGET_USER,
         },
     )
@@ -883,8 +883,8 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "index": state["pr_index"],
-            "event": "REQUEST_CHANGES",
-            "body": "changes review",
+            "review_event": "REQUEST_CHANGES",
+            "review_body": "changes review",
             "sudo": TARGET_USER,
         },
     )
@@ -965,7 +965,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "index": state.get("pr_index", 0),
-            "Do": "merge",
+            "do": "merge",
             "merge_when_checks_succeed": True,
         },
     )
@@ -1000,7 +1000,7 @@ async def setup(session: MCPSession) -> None:
         {
             "owner": state["owner"],
             "repo": state["repo"],
-            "key": SSH_PUB,
+            "public_key": SSH_PUB,
             "title": f"t{rid}-key",
         },
     )
@@ -1211,7 +1211,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["src_repo"],
             "filepath": "source.txt",
-            "content": b64("source one\n"),
+            "content": "source one\n",
             "message": "source one",
         },
     )
@@ -1237,7 +1237,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["src_repo"],
             "filepath": "source2.txt",
-            "content": b64("source two\n"),
+            "content": "source two\n",
             "message": "source two",
         },
     )
@@ -1292,7 +1292,7 @@ async def setup(session: MCPSession) -> None:
             "owner": state["owner"],
             "repo": state["repo"],
             "filepath": f"fork-{rid}.txt",
-            "content": b64("fork upstream\n"),
+            "content": "fork upstream\n",
             "message": "fork upstream commit",
             "branch": state["base"],
         },
@@ -1347,7 +1347,7 @@ def path_value(tool: str, name: str) -> Any:
         return state.get("wiki_page", "")
     if name == "position":
         return 2
-    if name == "basehead":
+    if name == "compare_range":
         return f"{state.get('base', 'main')}...{state.get('branch', 'main')}"
     if name == "base":
         return state.get("base", "main")
@@ -1467,35 +1467,24 @@ def required_value(tool: str, name: str) -> Any:
         "new_branch_name": f"t{rid}-newbranch",
         "head": state.get("branch", "main"),
         "base": state.get("base", "main"),
-        "key": SSH_PUB,
-        "content": b64("content\n"),
-        "content_base64": b64("content\n"),
+        "public_key": SSH_PUB,
+        "content": "content\n",
+        "content": "content\n",
         "message": "test message",
         "sha": state.get("sha", ""),
         "state": "success",
         "do": "merge",
-        "Do": "merge",
         "event": "item_added_to_project",
         "time": 3600,
+        "operation": "create",
+        "path": state.get("filepath", "test.txt"),
+        "review_event": "COMMENT",
+        "review_body": "test review",
         "username": f"t{rid}org",
         "permission": "write",
         "labels": [state.get("label_id", 0)],
         "assignees": [TARGET_USER],
         "reviewers": [TARGET_USER],
-        "files": [
-            {
-                "operation": "create",
-                "path": f"t{rid}-bulk.txt",
-                "content": b64("bulk\n"),
-            }
-        ],
-        "comments": [
-            {
-                "path": state.get("filepath", "test.txt"),
-                "body": "line",
-                "new_position": 1,
-            }
-        ],
         "due_date": FUTURE,
         "due_on": FUTURE,
         "email": f"{tool}@example.com",
@@ -1540,7 +1529,7 @@ def build_args(tool: str, spec: dict) -> dict:
         "repo_get_contents": {"ref": state.get("test_branch", "")},
         "repo_update_file": {
             "filepath": state.get("file2_path", "update-delete.txt"),
-            "content": b64("updated file\n"),
+            "content": "updated file\n",
             "sha": state.get("file2_sha") or state.get("sha", ""),
             "message": "update file",
             "branch": state.get("file_branch", ""),
@@ -1558,7 +1547,7 @@ def build_args(tool: str, spec: dict) -> dict:
         "issue_replace_labels": {"labels": [state.get("label_id", 0)]},
         "issue_delete_issue_reaction": {"content": "+1"},
         "issue_delete_comment_reaction": {"content": "+1"},
-        "repo_update_branch_protection_priories": {"ids": []},
+        "repo_update_branch_protection_priorities": {"protection_ids": []},
         "notify_read_repo_list": {"all": "true", "to_status": "read"},
         "repo_list_teams": {"owner": state.get("org", ""), "repo": state.get("org_repo", "")},
         "repo_check_team": {
@@ -1640,40 +1629,36 @@ def build_args(tool: str, spec: dict) -> dict:
         },
         "repo_create_wiki_page": {
             "title": f"t{rid}-wiki2",
-            "content_base64": b64("wiki2\n"),
+            "content": "wiki2\n",
         },
         "repo_create_file": {
             "filepath": f"t{rid}-extra.txt",
-            "content": b64("extra\n"),
+            "content": "extra\n",
             "message": "extra file",
             "branch": state.get("file_branch", ""),
         },
         "repo_change_files": {
-            "files": [
-                {
-                    "operation": "create",
-                    "path": f"t{rid}-bulk.txt",
-                    "content": b64("bulk\n"),
-                }
-            ],
+            "operation": "create",
+            "path": f"t{rid}-bulk.txt",
+            "content": "bulk\n",
             "message": "bulk",
             "branch": state.get("file_branch", ""),
         },
         "repo_apply_diff_patch": {
             "branch": state.get("file_branch", ""),
-            "content": f"diff --git a/diff-{rid}.txt b/diff-{rid}.txt\n--- a/diff-{rid}.txt\n+++ b/diff-{rid}.txt\n@@ -1 +1 @@\n-old\n+new\n",
+            "patch": f"diff --git a/diff-{rid}.txt b/diff-{rid}.txt\n--- a/diff-{rid}.txt\n+++ b/diff-{rid}.txt\n@@ -1 +1 @@\n-old\n+new\n",
         },
         "repo_update_topics": {"topics": [f"t{rid}topic"]},
         "repo_create_pull_review": {
             "index": state.get("pr_index"),
-            "event": "COMMENT",
-            "body": "review two",
+            "review_event": "COMMENT",
+            "review_body": "review two",
         },
         "repo_submit_pull_review": {
             "index": state.get("pr_index"),
             "id": state.get("pending_review_id", 0),
-            "event": "COMMENT",
-            "body": "submitted",
+            "review_event": "COMMENT",
+            "review_body": "submitted",
         },
         "repo_create_pull_review_comment_reply": {
             "index": state.get("pr_index"),
@@ -1685,7 +1670,7 @@ def build_args(tool: str, spec: dict) -> dict:
         "repo_dismiss_pull_review": {
             "index": state.get("pr_index"),
             "id": state.get("approved_review_id", 0),
-            "message": "dismiss",
+            "dismiss_message": "dismiss",
         },
         "repo_un_dismiss_pull_review": {
             "index": state.get("pr_index"),
@@ -1702,7 +1687,7 @@ def build_args(tool: str, spec: dict) -> dict:
         "repo_create_status": {
             "sha": state.get("sha"),
             "state": "success",
-            "context": "gitea-mcp-test",
+            "status_context": "gitea-mcp-test",
         },
         "repo_create_branch_protection": {
             "branch_name": f"t{rid}-prot",
@@ -1710,7 +1695,7 @@ def build_args(tool: str, spec: dict) -> dict:
             "enable_push": True,
         },
         "repo_create_tag_protection": {"name_pattern": f"v{rid}-prot*"},
-        "repo_create_key": {"key": SSH_PUB, "title": f"t{rid}-key2"},
+        "repo_create_key": {"public_key": SSH_PUB, "title": f"t{rid}-key2"},
         "repo_create_deploy_token": {"title": f"t{rid}-token2"},
         "issue_create_issue": {"title": f"t{rid}-issue3", "body": "third test issue"},
         "issue_create_label": {
@@ -2014,8 +1999,8 @@ async def main() -> None:
                 "repo": state.get("repo", ""),
                 "sha": state.get("pr_head_sha") or state.get("sha") or "",
                 "state": "success",
-                "context": "gitea-mcp-check",
-                "description": "success status",
+                "status_context": "gitea-mcp-check",
+                "status_description": "success status",
             },
         )
         await asyncio.sleep(3)
@@ -2025,7 +2010,7 @@ async def main() -> None:
                 "owner": state.get("owner", ""),
                 "repo": state.get("repo", ""),
                 "index": state.get("pr_index", 0),
-                "Do": "merge",
+                "do": "merge",
             },
         )
         data = await run(

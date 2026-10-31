@@ -285,7 +285,7 @@ The server implements 257 MCP tools organized into the following categories:
 
 - `repo_list_branch_protection` — List branch protections for a repository
 - `repo_create_branch_protection` — Create a branch protections for a repository
-- `repo_update_branch_protection_priories` — Update the priorities of branch protections for a repository
+- `repo_update_branch_protection_priorities` — Update the priorities of branch protections for a repository
 - `repo_delete_branch_protection` — Delete a specific branch protection for the repository
 - `repo_get_branch_protection` — Get a specific branch protection for the repository
 - `repo_edit_branch_protection` — Edit a branch protections for a repository
